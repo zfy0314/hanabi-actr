@@ -59,6 +59,20 @@ class Card:
     def possible(self):
         return [Card(color, rank) for color, rank in product(self._colors, self._ranks)]
 
+    def show_knowledge(self):
+        res = ""
+        for color in Color:
+            if color in self._colors:
+                res += " " + color.name
+            else:
+                res += " " * (len(color.name) + 1)
+        for rank in range(1, 6):
+            if rank in self._ranks:
+                res += " " + str(rank)
+            else:
+                res += "  "
+        return res
+
 
 class Deck:
     def __init__(self, init=None):
@@ -70,7 +84,7 @@ class Deck:
         if init:
             seed(init)
         shuffle(self._deck)
-        self.count = self._deck.get
+        self.count = self._count.get
 
     def pop(self):
         """Deal a card from the deck, update the counter"""
@@ -94,8 +108,15 @@ class Hand:
         for i in range(num):
             self.get()
 
+    def __str__(self):
+        return str([str(card) for card in self.cards])
+
     def __getitem__(self, key):
         return self.cards[key]
+
+    def show_knowledge(self, prefix=""):
+        for i, card in enumerate(self.cards):
+            print(prefix, i + 1, card.show_knowledge())
 
     def get(self):
         self.cards.append(self._deck.pop())
@@ -110,8 +131,8 @@ class Hand:
             card.hint_rank(rank)
 
     def remove(self, index):
-        card = self.cards[index]
-        del self.cards[index]
+        card = self.cards[index - 1]
+        del self.cards[index - 1]
         self.get()
         return card
 
@@ -120,10 +141,16 @@ class Board:
     def __init__(self):
         self._count = {color: 0 for color in Color}
 
+    def __str__(self):
+        return " ".join(
+            ["Board:\n"]
+            + ["{}: {} |".format(col.name, self._count[col]) for col in sorted(Color)]
+        )
+
     def play(self, card):
         """Try to play a card. Return True for successful play, o.w. False"""
-        if self._count[card.color] == card.rank - 1:
-            self._count[card.color] += 1
+        if self._count[card._color] == card._rank - 1:
+            self._count[card._color] += 1
             return True
         else:
             return False
@@ -136,6 +163,16 @@ class Board:
 class Trash:
     def __init__(self):
         self._count = {}
+
+    def __str__(self):
+        res = "Trash:\n"
+        for color in Color:
+            res += ("  " + color.name + ":").ljust(10, " ")
+            for rank in range(1, 6):
+                for i in range(self.count(Card(color, rank))):
+                    res += str(rank) + " "
+            res += "\n"
+        return res
 
     def add(self, card):
         self._count[card] = self.count(card) + 1

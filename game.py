@@ -23,8 +23,10 @@ class Game:
             print(*args)
 
     def turn(self):
+        """A single turn for a single player"""
         self.current_player = (self.current_player + 1) % len(self.players)
-        action = self.player[self.current_player].get_action(self)
+        action = self.players[self.current_player].get_action(self)
+
         if action.type in [ActionType.hint_color, ActionType.hint_rank]:
             if self.hints == 0:
                 self._print("bad attempt to hint when no hint token is available")
@@ -33,7 +35,8 @@ class Game:
                 self._print("bad attempt to hint one's self")
                 return False
             else:
-                self.hands[action.pnr].getattr(action.type.name)(action.index)
+                self.hints -= 1
+                getattr(self.hands[action.pnr], action.type.name)(action.index)
         elif action.type == ActionType.play:
             card = self.hands[self.current_player].remove(action.index)
             if card is None:
@@ -45,13 +48,23 @@ class Game:
                 if self.hits == 3:
                     self._print("3 strikes!")
                     return False
+            else:
+                self.hints = min(8, self.hints + (card._rank == 5))
         elif action.type == ActionType.discard:
             card = self.hands[self.current_player].remove(action.index)
             if card is None:
-                self._print("bad attempt to play non existing card")
+                self._print("bad attempt to discard non existing card")
+                return False
+            if self.hints == 8:
+                self._print("bad attempt to discard with all hint tokens")
                 return False
             self.trash.add(card)
-        self.extra += self.deck.isempty()
+            self.hints += 1
+
+        for player in self.players:
+            player.inform(action, self)
+
+        self.extra += self.deck.isempty
         return self.extra < 2
 
     def run(self):

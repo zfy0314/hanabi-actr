@@ -14,6 +14,9 @@ class Action:
         self.index = index
         self.pnr = pnr
 
+    def __str__(self):
+        return "<{} {}>".format(self.type.name, self.index)
+
 
 class Player:
     def __init__(self, name, pnr):
@@ -23,8 +26,8 @@ class Player:
     def __hash__(self):
         return hash(self.name) + self.pnr
 
-    def get_action(self):
+    def get_action(self, game):
         pass
 
-    def inform(self, action):
+    def inform(self, action, game):
         pass

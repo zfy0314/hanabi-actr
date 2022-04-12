@@ -1,4 +1,5 @@
 from enum import IntEnum
+from utils import Color
 
 
 class ActionType(IntEnum):
@@ -14,8 +15,20 @@ class Action:
         self.index = index
         self.pnr = pnr
 
+    def __eq__(self, other):
+        self.type == other.type
+        self.idnex == other.index
+
+    def __hash__(self):
+        return self.type * 59 + self.index
+
     def __str__(self):
-        return "<{} {}>".format(self.type.name, self.index)
+        return "<{} {}>".format(
+            self.type.name,
+            self.index
+            if self.type != ActionType.hint_color
+            else Color(self.index).name,
+        )
 
 
 class Player:
@@ -29,5 +42,5 @@ class Player:
     def get_action(self, game):
         pass
 
-    def inform(self, action, game):
+    def inform(self, pnr, action, game):
         pass

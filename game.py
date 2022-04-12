@@ -1,68 +1,70 @@
-from player import ActionType
+from player import ActionType as AT
 import utils
 
 
 class Game:
-    def __init__(self, players):
+    def __init__(self, players, seed=None):
         self.debug = True
         self.players = players
-        self.reset()
+        self.reset(seed)
 
-    def reset(self):
+    def reset(self, seed):
         self.board = utils.Board()
         self.trash = utils.Trash()
-        self.deck = utils.Deck()
-        self.hands = [utils.Hand(self.deck, player.name) for player in self.players]
+        self.deck = utils.Deck(game=self, init=seed)
+        self.hands = [utils.Hand(self.deck, player.pnr) for player in self.players]
         self.hints = 8
         self.hits = 0
-        self.extra = 0  # extra turn after deck is empty
+        self.extra = 0  # extra turns after deck is empty
+        self.turns = 0
         self.current_player = -1
-
-    def _print(self, *args):
-        if self.debug:
-            print(*args)
+        self.action_log = []
+        for i, player in enumerate(self.players):
+            player.pnr = i
 
     def turn(self):
         """A single turn for a single player"""
+        self.turns += 1
         self.current_player = (self.current_player + 1) % len(self.players)
         action = self.players[self.current_player].get_action(self)
+        self.action_log.append(action)
 
-        if action.type in [ActionType.hint_color, ActionType.hint_rank]:
+        if action.type in [AT.hint_color, AT.hint_rank]:
             if self.hints == 0:
-                self._print("bad attempt to hint when no hint token is available")
+                utils._print("bad attempt to hint when no hint token is available")
                 return False
             elif action.pnr == self.current_player:
-                self._print("bad attempt to hint one's self")
+                utils._print("bad attempt to hint one's self")
                 return False
             else:
                 self.hints -= 1
                 getattr(self.hands[action.pnr], action.type.name)(action.index)
-        elif action.type == ActionType.play:
+        elif action.type == AT.play:
             card = self.hands[self.current_player].remove(action.index)
             if card is None:
-                self._print("bad attempt to play non existing card")
+                utils._print("bad attempt to play non existing card")
                 return False
             if not self.board.play(card):
                 self.trash.add(card)
                 self.hits += 1
                 if self.hits == 3:
-                    self._print("3 strikes!")
+                    utils._print("3 strikes!")
                     return False
             else:
                 self.hints = min(8, self.hints + (card._rank == 5))
-        elif action.type == ActionType.discard:
+        elif action.type == AT.discard:
             card = self.hands[self.current_player].remove(action.index)
             if card is None:
-                self._print("bad attempt to discard non existing card")
+                utils._print("bad attempt to discard non existing card")
                 return False
             if self.hints == 8:
-                self._print("bad attempt to discard with all hint tokens")
+                utils._print("bad attempt to discard with all hint tokens")
                 return False
             self.trash.add(card)
             self.hints += 1
 
         for player in self.players:
-            player.inform(action, self)
+            player.inform(self.current_player, action, self)
 
         self.extra += self.deck.isempty
         return self.extra < 2

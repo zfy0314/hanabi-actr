@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # print("score: ", score)
 
     seed(0)
-    n = 100
+    n = 500
     utils.debugging = False
     scores = []
     for i in range(n):
@@ -161,3 +161,11 @@ if __name__ == "__main__":
             max(set(scores), key=scores.count),
         )
     )
+
+    from matplotlib import pyplot as plt
+
+    plt.hist(scores, range(27), density=True)
+    plt.xlabel("score")
+    plt.ylabel("desity")
+    plt.title("distribution of baseline agent over {} games".format(n))
+    plt.savefig("baseline_distribution.png")

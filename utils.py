@@ -134,9 +134,10 @@ class Deck:
         self._deck = []
         for (color, (rank, count)) in product(Color, card_count.items()):
             self._deck.extend([Card(color, rank, game=game) for _ in range(count)])
-        if init:
+        if isinstance(init, int):
             seed(init)
-        shuffle(self._deck)
+        if init != "noshuffle":
+            shuffle(self._deck)
 
     def pop(self):
         """Deal a card from the deck, update the counter"""
@@ -163,7 +164,7 @@ class Hand:
         return str([str(card) for card in self.cards])
 
     def __getitem__(self, key):
-        assert 1 <= key and key <= len(self)
+        assert 1 <= key and key <= len(self), str(key)
         return self.cards[key - 1]
 
     def __len__(self):

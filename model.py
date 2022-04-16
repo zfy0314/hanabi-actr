@@ -1,6 +1,7 @@
 import actr
 from player import ActionType as AT
 from player import Action, Player
+from utils import Color
 
 
 class ActrPlayer(Player):
@@ -12,10 +13,47 @@ class ActrPlayer(Player):
         self.response = ""
 
         self.ATmap = [None, "C", "R", "P", "D"]
+        self.ranks = ["zero", "one", "two", "three", "four", "five"]
         self.nrmap = [None, 1 - pnr, 1 - pnr, pnr, pnr]
 
     def _show_state(self, game):
         actr.clear_exp_window()
+        allcards = []
+        for i, color in enumerate(Color):
+            allcards.append(
+                [
+                    "isa",
+                    ["card-loc", "card-obj"],
+                    "screen-x",
+                    0,
+                    "screen-y",
+                    i * 10,
+                    "color",
+                    color.name,
+                    "rank",
+                    self.ranks[game.board[color]],
+                    "owner",
+                    "board",
+                ]
+            )
+        for i, card in enumerate(game.hands[1 - self.pnr].cards):
+            allcards.append(
+                [
+                    "isa",
+                    ["card-loc", "card-obj"],
+                    "screen-x",
+                    20,
+                    "screen-y",
+                    i * 10,
+                    "color",
+                    card.get_color(self.pnr).name,
+                    "rank",
+                    self.ranks[card.get_rank(self.pnr)],
+                    "owner",
+                    "partner",
+                ]
+            )
+        actr.add_visicon_features(*allcards)
 
     def _get_key(self, model, key):
         self.response += key
@@ -50,6 +88,8 @@ if __name__ == "__main__":
     from game import Game
     from human import HumanPlayer
 
-    G = Game([HumanPlayer("Alice", 0, debug=True), ActrPlayer("Bob", 1)], seed=0)
+    G = Game(
+        [ActrPlayer("Alice", 0), HumanPlayer("bob", 1, debug=True)], seed="noshuffle"
+    )
     score = G.run()
     print("score: ", score)

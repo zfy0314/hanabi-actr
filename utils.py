@@ -84,9 +84,11 @@ class Card:
 
     @property
     def possible(self):
+        """All possibility of the card; no card counting"""
         return [Card(color, rank) for color, rank in product(self._colors, self._ranks)]
 
     def _check_game(self):
+        """Ensure the card is linked to a game object"""
         if self.game is None:
             _print("game is not set for card: {}".format(str(self)))
             return False
@@ -94,18 +96,21 @@ class Card:
 
     @property
     def playable(self):
+        """Return true iff the card is definitely playable"""
         if self._check_game():
             return all(self.game.board.playable(card) for card in self.possible)
         return False
 
     @property
     def playable_possibly(self):
+        """Return true iff the card is not definitely unplayable"""
         if self._check_game():
             return any(self.game.board.playable(card) for card in self.possible)
         return False
 
     @property
     def useless(self):
+        """Return true iff the card is useless; no card counting"""
         if self._check_game():
 
             def isuseless(card):
@@ -123,6 +128,7 @@ class Card:
         return False
 
     def show_knowledge(self):
+        """Visual knowledge of the card in human readable form"""
         res = ""
         for color in Color:
             if color in self._colors:
@@ -164,7 +170,7 @@ class Hand:
         self._deck = deck
         self.cards = []
         self.owner = owner
-        self.last_hinted = set()
+        self.last_hinted = set()  # last hinted cards
         for i in range(num):
             self.get()
 
@@ -179,28 +185,33 @@ class Hand:
         return len(self.cards)
 
     def show_knowledge(self, prefix=""):
+        """Visual knowledge of the hand in human readable form"""
         for i, card in enumerate(self.cards):
             print(prefix, i + 1, card.show_knowledge())
 
     def get(self):
+        """Deal a card from teh deck and append to the right"""
         card = self._deck.pop()
         if card is not None:
             card.owner = self.owner
             self.cards.append(card)
 
     def hint_color(self, color):
+        """Update all cards in hand with new hint"""
         self.last_hinted = set()
         for i, card in enumerate(self.cards):
             if card.hint_color(color):
                 self.last_hinted.add(i + 1)
 
     def hint_rank(self, rank):
+        """Update all cards in hand with new hint"""
         self.last_hinted = set()
         for i, card in enumerate(self.cards):
             if card.hint_rank(rank):
                 self.last_hinted.add(i + 1)
 
     def gain_hint_color(self, color):
+        """Hypothesized number of possibilities eliminated by hinting a color"""
         copied = deepcopy(self.cards)
         for card in copied:
             card.hint_color(color)
@@ -209,6 +220,7 @@ class Hand:
         return before - after
 
     def gain_hint_rank(self, rank):
+        """Hypothesized number of possibilities eliminated by hinting a rank"""
         copied = deepcopy(self.cards)
         for card in copied:
             card.hint_rank(rank)
@@ -217,6 +229,8 @@ class Hand:
         return before - after
 
     def remove(self, index):
+        """Play/Discard a card from hand; reset last hinted"""
+        self.last_hinted = set()
         card = self.cards[index - 1]
         del self.cards[index - 1]
         self.get()
@@ -236,6 +250,7 @@ class Board:
         )
 
     def playable(self, card):
+        """Return true iff the card is playable"""
         return self._count[card._color] == card._rank - 1
 
     def play(self, card):

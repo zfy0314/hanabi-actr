@@ -1,3 +1,4 @@
+from functools import cmp_to_key
 from random import choice, seed
 from player import ActionType as AT
 from player import Action, Player
@@ -112,11 +113,25 @@ class HardcodedPlayer(Player):
         # hint for maximum gain
         utils._print("try to hint for most information")
         utils._print({str(k): v for k, v in hints_info.items()})
+        cleared = {
+            x: sum(blocked.count(i) for i in hints[x]) for x in hints_info.keys()
+        }
+
+        def cmp_gain(x, y):
+            if cleared[x] < cleared[y]:
+                return -1
+            elif cleared[x] == cleared[y]:
+                if hints_info[x] < hints_info[y]:
+                    return -1
+                elif hints_info[x] > hints_info[y]:
+                    return 1
+                else:
+                    return 0
+            else:
+                return 1
+
         if game.hints > 2 and len(hints_info) > 0:
-            return max(
-                hints_info.keys(),
-                key=lambda x: sum(blocked.count(i) for i in hints[x]),
-            )
+            return max(hints_info.keys(), key=cmp_to_key(cmp_gain))
 
         # discard oldest unhinted card
         utils._print("default dicard")
@@ -138,34 +153,59 @@ class HardcodedPlayer(Player):
 
 if __name__ == "__main__":
     from game import Game
+    import argparse
 
-    # from human import HumanPlayer
-
-    # G = Game([HumanPlayer("Alice", 0, debug=True), HardcodedPlayer("Bob", 1)], seed=0)
-    # score = G.run()
-    # print("score: ", score)
-
-    seed(0)
-    n = 500
-    utils.debugging = False
-    scores = []
-    for i in range(n):
-        G = Game([HardcodedPlayer("Alice", 0), HardcodedPlayer("Bob", 1)])
-        scores.append(G.run())
-    print(
-        "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
-            n,
-            sum(scores) / n,
-            min(scores),
-            max(scores),
-            max(set(scores), key=scores.count),
-        )
+    parser = argparse.ArgumentParser(description="Baseline hardcoded agent for Hanabi")
+    parser.add_argument(
+        "--human", action="store_true", help="play the baseline with a cli interface"
     )
+    parser.add_argument("--debug", action="store_true", help="enable debugging message")
+    parser.add_argument(
+        "--seed", default=0, help="seed for initializing the deck", type=int
+    )
+    parser.add_argument("--runs", default=1, help="number of games", type=int)
+    parser.add_argument("--dist", action="store_true", help="draw score distribution")
+    parser.add_argument(
+        "--png",
+        default="baseline_distribution.png",
+        help="file name for distribution plot",
+        type=str,
+    )
+    args = parser.parse_args()
+    utils.debugging = args.debug
 
-    from matplotlib import pyplot as plt
+    if args.human:
+        from human import HumanPlayer
 
-    plt.hist(scores, range(27), density=True)
-    plt.xlabel("score")
-    plt.ylabel("desity")
-    plt.title("distribution of baseline agent over {} games".format(n))
-    plt.savefig("baseline_distribution.png")
+        player1 = HumanPlayer("Alice", 0, debug=args.debug)
+    else:
+        player1 = HardcodedPlayer("Alice", 0)
+
+    if args.runs == 1:
+        G = Game([player1, HardcodedPlayer("Bob", 1)], seed=args.seed)
+        score = G.run()
+        print("score: ", score)
+    else:
+        seed(args.seed)
+        scores = []
+        for i in range(args.runs):
+            G = Game([player1, HardcodedPlayer("Bob", 1)])
+            scores.append(G.run())
+        print(
+            "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
+                args.runs,
+                sum(scores) / args.runs,
+                min(scores),
+                max(scores),
+                max(set(scores), key=scores.count),
+            )
+        )
+
+        if args.dist:
+            from matplotlib import pyplot as plt
+
+            plt.hist(scores, range(27), density=True)
+            plt.xlabel("score")
+            plt.ylabel("density")
+            plt.title("distribution of baseline agent over {} games".format(args.runs))
+            plt.savefig(args.png)

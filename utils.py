@@ -22,12 +22,20 @@ class Color(IntEnum):
     yellow = 5
 
 
+class Rank(IntEnum):
+    one = 1
+    two = 2
+    three = 3
+    four = 4
+    five = 5
+
+
 class Card:
     def __init__(self, color, rank, owner=None, game=None):
-        self._color = color
-        self._rank = rank
+        self._color = color if isinstance(color, Color) else Color(color)
+        self._rank = rank if isinstance(rank, Rank) else Rank(rank)
         self._colors = set(Color)
-        self._ranks = set(range(1, 6))
+        self._ranks = set(Rank)
         self.owner = owner
         self.game = game
 
@@ -121,9 +129,9 @@ class Card:
                 res += " " + color.name
             else:
                 res += " " * (len(color.name) + 1)
-        for rank in range(1, 6):
+        for rank in Rank:
             if rank in self._ranks:
-                res += " " + str(rank)
+                res += " " + str(rank.value)
             else:
                 res += "  "
         return res
@@ -251,9 +259,9 @@ class Trash:
         res = "Trash:\n"
         for color in Color:
             res += ("  " + color.name + ":").ljust(10, " ")
-            for rank in range(1, 6):
+            for rank in Rank:
                 for i in range(self.count(Card(color, rank))):
-                    res += str(rank) + " "
+                    res += str(rank.value) + " "
             res += "\n"
         return res
 

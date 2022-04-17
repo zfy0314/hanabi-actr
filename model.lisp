@@ -4,17 +4,17 @@
 (sgp :v t :esc t :egs 1 :show-focus f :ul t :ult t :needs-mouse t)
 
 (chunk-type goal-type state hints hits)
-(chunk-type (card-loc (:include visual-location)) color rank owner index)
-(chunk-type (card-obj (:include visual-object))   color rank owner index)
-(chunk-type (knowledge-loc (:include visual-location)) blue green red white yellow one two three four five index owner)
-(chunk-type (knowledge-obj (:include visual-object))   blue green red white yellow one two three four five index owner)
+(chunk-type (card-loc (:include visual-location)) color rank owner index count)
+(chunk-type (card-obj (:include visual-object))   color rank owner index count)
+(chunk-type (knowledge-loc (:include visual-location)) blue green red white yellow one two three four five color rank hinted index owner)
+(chunk-type (knowledge-obj (:include visual-object))   blue green red white yellow one two three four five color rank hinted index owner)
 
 (chunk-type rank rank next key)
 (chunk-type index obj key)
 (chunk-type hint color rank)
 
 (add-dm
-   (goal isa goal-type state play)
+   (goal isa goal-type state start)
    (zero  isa rank rank zero  next one   key "0")
    (one   isa rank rank one   next two   key "1")
    (two   isa rank rank two   next three key "2")
@@ -31,13 +31,14 @@
 (P find-partner-card
    =goal>
       isa         goal-type
-      state       play
+      state       start
 ==>
    =goal>
       state       attend-partner
    +visual-location>
       isa         card-loc
       :attended   nil
+      kind        card-obj
       owner       partner
 )
 
@@ -68,7 +69,7 @@
       state       check-board
    +visual-location>
       isa         card-loc
-      :attended   nil
+      kind        card-obj
       owner       board
       color       =c
    +retrieval>
@@ -105,7 +106,6 @@
    =retrieval>
       isa         rank
       rank        =rb
-      next        =r
    =imaginal>
       isa         hint
       color       =c
@@ -122,13 +122,19 @@
    =goal>
       isa         goal-type
       state       check-partner
-   ?visual>
-      buffer failure
+   =visual>
+      isa         card-obj
+      owner       board
+      rank        =rb
+   =retrieval>
+      isa         rank
+    - rank        =rb
 ==>
    =goal>
-      state       play
+      state       start
    -retrieval>
    -visual-location>
+   -imaginal>
 )
 
 (P hint-color
@@ -153,7 +159,7 @@
       key         =key
 ==>
    =goal>
-      state       play
+      state       done
    +manual>
       cmd         press-key
       key         =key

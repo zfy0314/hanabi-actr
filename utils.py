@@ -273,3 +273,9 @@ class Trash:
 
     def hasall(self, card):
         return self.count(card) == card_count[card._rank]
+
+    @property
+    def all(self):
+        return [
+            (c.name, r.name, self.count(Card(c, r))) for c, r in product(Color, Rank)
+        ]

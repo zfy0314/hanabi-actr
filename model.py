@@ -147,7 +147,7 @@ class ActrPlayer(Player):
         )
         actr.monitor_command("output-key", "key-press")
         self._set_goal("start", game)
-        actr.run(20)
+        actr.run(200)
         actr.remove_command_monitor("output-key", "key-press")
         actr.remove_command("key-press")
 

@@ -13,10 +13,24 @@
    hints hits blue green red yellow white ; game state
    s1 s2 s3 s4 s5 s6 s7                   ; if attempted each strategy
 )
-(chunk-type imaginal-type blue green red yellow white one two three four five index key)
+(chunk-type imaginal-type blue green red yellow white one two three four five key)
+
+(chunk-type color-iter prev next)
+(chunk-type rank-iter prev next index)
 
 (add-dm
    (goal isa goal-type state start)
+   (c0 isa color-iter prev nil   next blue  )
+   (c1 isa color-iter prev blue  next green )
+   (c2 isa color-iter prev green next red   )
+   (c3 isa color-iter prev red   next white )
+   (c4 isa color-iter prev white next yellow)
+   (r0 isa rank-iter prev zero  next one   rindex 0)
+   (r1 isa rank-iter prev one   next two   rindex 1)
+   (r2 isa rank-iter prev two   next three rindex 2)
+   (r3 isa rank-iter prev three next four  rindex 3)
+   (r4 isa rank-iter prev four  next five  rindex 4)
+   (r5 isa rank-iter prev five  next nil   rindex 5)
 )
 
 
@@ -47,8 +61,6 @@
    =goal>
       state       =n
 )
-
-
 
 ; reasonable strategies
 (P s-play-definitely-playable
@@ -134,16 +146,30 @@
       screen-y    highest
 )
 
-; (P s-discard-useless
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     < hint        8
-; ==>
-;    =goal>
-;       state       discard-useless-0
-; )
-;
+(P s-discard-useless
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+      s4          t
+==>
+   =goal>
+      state       attend
+      misc1       discard-useless-test-my
+      misc2       discard-useless-failure
+      misc3       discard-useless-init
+   +imaginal>
+      yellow      5
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    lowest
+   +retrieval>
+      isa         color-iter
+      next        blue
+)
+
 ; (P s-discard-least-info
 ;    =goal>
 ;       isa         goal-type
@@ -927,7 +953,6 @@
    =visual>
 )
 
-
 (P p-play-just-hinted-check-red-success
    =visual>
       isa         knowledge-obj
@@ -944,6 +969,72 @@
    =imaginal>
       isa         imaginal-type
       red         t
+==>
+   =goal>
+      state       play
+   =imaginal>
+      isa         imaginal-type
+      key         =i
+)
+
+(P p-play-just-hinted-check-red-bad-rank
+   =visual>
+      isa         knowledge-obj
+      owner       model
+      rank        =r
+    - rank        nil
+      red         t
+   !bind! =s (- =r 1)
+   =goal>
+      isa         goal-type
+      state       play-just-hinted-test-my
+    - red         =s
+   =imaginal>
+      isa         imaginal-type
+      red         t
+==>
+   =goal>
+      state       play-just-hinted-test-my
+   =imaginal>
+      red         nil
+   =visual>
+)
+
+(P p-play-just-hinted-check-red-impossible
+   =visual>
+      isa         knowledge-obj
+      owner       model
+    - red         t
+   =goal>
+      isa         goal-type
+      state       play-just-hinted-test-my
+   =imaginal>
+      isa         imaginal-type
+      red         t
+==>
+   =goal>
+      state       play-just-hinted-test-my
+   =imaginal>
+      red         nil
+   =visual>
+)
+
+(P p-play-just-hinted-check-white-success
+   =visual>
+      isa         knowledge-obj
+      owner       model
+      rank        =r
+    - rank        nil
+      index       =i
+      white       t
+   !bind! =s (- =r 1)
+   =goal>
+      isa         goal-type
+      state       play-just-hinted-test-my
+      white       =s
+   =imaginal>
+      isa         imaginal-type
+      white       t
 ==>
    =goal>
       state       play
@@ -1380,6 +1471,164 @@
       state       play-just-hinted-test-my
    =imaginal>
       five        nil
+   =visual>
+)
+
+
+
+; discard-useless
+(P p-discard-useless-init
+   =goal>
+      isa         goal-type
+      state       discard-useless-init
+==>
+   =goal>
+      state       attend
+      misc1       discard-useless-test-my
+      misc2       discard-useless-failure
+      misc3       discard-useless-init
+   +imaginal>
+      yellow      5
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    lowest
+    > screen-y    current
+   +retrieval>
+      isa         color-iter
+      next        green
+)
+
+(P p-discard-useless-failure
+   =goal>
+      isa         goal-type
+      state       discard-useless-failure
+==>
+   =goal>
+      state       start
+      s4          nil
+   -visual-location>
+   -imaginal>
+)
+
+(P p-discard-useless-test-my-check-color-possible
+   =retrieval>
+      isa         color-iter
+      next        =nc
+   =imaginal>
+      yellow      =img
+   =goal>
+      isa         goal-type
+      state       discard-useless-test-my
+      =nc         =rnc
+   =visual>
+      isa         knowledge-loc
+      owner       model
+      =nc         t
+   !bind! =m (min =img =rnc)
+==>
+   =goal>
+      state       discard-useless-test-my
+   =visual>
+   =imaginal>
+      yellow      =m
+   +retrieval>
+      isa         color-iter
+      prev        =nc
+)
+
+(P p-discard-useless-test-my-check-color-impossible
+   =retrieval>
+      isa         color-iter
+      next        =nc
+   =goal>
+      isa         goal-type
+      state       discard-useless-test-my
+   =visual>
+      isa         knowledge-loc
+      owner       model
+    - =nc         t
+==>
+   =goal>
+      state       discard-useless-test-my
+   =visual>
+   +retrieval>
+      isa         color-iter
+      prev        =nc
+)
+
+(P p-discard-useless-test-my-check-rank-start
+   ?retrieval>
+      buffer      failure
+   =imaginal>
+      yellow      =min
+   =goal>
+      isa         goal-type
+      state       discard-useless-test-my
+   =visual>
+      isa         knowledge-loc
+      owner       model
+==>
+   =goal>
+      state       discard-useless-test-my-rank
+   +retrieval>
+      isa         rank-iter
+      rindex      =min
+   =visual>
+)
+
+(P p-discard-useless-test-my-check-rank-success
+   =retrieval>
+      next        =nr
+   =goal>
+      isa         goal-type
+      state       discard-useless-test-my-rank
+   =visual>
+      isa         knowledge-loc
+      owner       model
+      =nr         nil
+==>
+   =goal>
+      state       discard-useless-test-my-rank
+   +retrieval>
+      isa         rank-iter
+      prev        =nr
+   =visual>
+)
+
+(P p-discard-useless-test-my-check-rank-failure
+   =retrieval>
+      next        =nr
+   =goal>
+      isa         goal-type
+      state       discard-useless-test-my-rank
+   =visual>
+      isa         knowledge-loc
+      owner       model
+      =nr         t
+==>
+   =goal>
+      state       discard-useless-init
+   -retrieval>
+)
+
+(P p-discard-useless-test-my-check-rank-finish
+   =retrieval>
+      next        nil
+   =goal>
+      isa         goal-type
+      state       discard-useless-test-my-rank
+   =visual>
+      isa         knowledge-loc
+      owner       model
+      index       =i
+==>
+   =goal>
+      state       discard
+   +imaginal>
+      isa         imaginal-type
+      key         =i
    =visual>
 )
 

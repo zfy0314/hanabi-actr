@@ -19,8 +19,8 @@ class Game:
         self.turns = 0
         self.current_player = -1
         self.action_log = []
-        for i, player in enumerate(self.players):
-            player.pnr = i
+        for player in self.players:
+            player.reset()
 
     def turn(self):
         """A single turn for a single player"""

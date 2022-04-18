@@ -9,6 +9,9 @@ class HardcodedPlayer(Player):
     def __init__(self, name, pnr):
         self.name = name
         self.pnr = pnr
+        self.reset()
+
+    def reset(self):
         self.last_hinted = None
 
     def get_action(self, game):
@@ -159,6 +162,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--human", action="store_true", help="play the baseline with a cli interface"
     )
+    parser.add_argument(
+        "--switch", action="store_true", help="change the order of the players"
+    )
     parser.add_argument("--debug", action="store_true", help="enable debugging message")
     parser.add_argument(
         "--seed", default=0, help="seed for initializing the deck", type=int
@@ -177,20 +183,30 @@ if __name__ == "__main__":
     if args.human:
         from human import HumanPlayer
 
-        player1 = HumanPlayer("Alice", 0, debug=args.debug)
+        if args.switch:
+            players = [
+                HardcodedPlayer("Alice", 0),
+                HumanPlayer("Bob", 1, debug=args.debug),
+            ]
+        else:
+            players = [
+                HumanPlayer("Alice", 0, debug=args.debug),
+                HardcodedPlayer("Bob", 1),
+            ]
     else:
-        player1 = HardcodedPlayer("Alice", 0)
+        players = [HardcodedPlayer("Alice", 0), HardcodedPlayer("Bob", 1)]
 
     if args.runs == 1:
-        G = Game([player1, HardcodedPlayer("Bob", 1)], seed=args.seed)
+        G = Game(players, seed=args.seed)
         score = G.run()
         print("score: ", score)
     else:
         seed(args.seed)
         scores = []
+        G = Game(players)
         for i in range(args.runs):
-            G = Game([player1, HardcodedPlayer("Bob", 1)])
             scores.append(G.run())
+            G.reset(None)
         print(
             "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
                 args.runs,

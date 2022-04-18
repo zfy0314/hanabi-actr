@@ -5,19 +5,23 @@ from utils import Color, Rank
 
 
 class ActrPlayer(Player):
-    def __init__(self, name, pnr, model_path="ACT-R:final;model.lisp"):
+    def __init__(self, name, pnr, debug=False, model_path="ACT-R:final;model.lisp"):
         self.name = name
         self.pnr = pnr
         self.ppnr = 1 - self.pnr
 
         actr.load_act_r_model(model_path)
         actr.install_device(actr.open_exp_window("Hanabi", visible=False))
+        actr.set_parameter_value(":v", debug)
         self.response = ""
-        self.last_hinted = set()
 
         self.ATmap = [None, "C", "R", "P", "D"]
         self.ranks = ["zero", "one", "two", "three", "four", "five"]
         self.nrmap = [None, self.ppnr, self.ppnr, pnr, pnr]
+        self.reset()
+
+    def reset(self):
+        self.last_hinted = set()
 
     def _card_info(self, name, x, y, color, rank, owner, index=None, count=None):
         return [
@@ -184,11 +188,94 @@ class ActrPlayer(Player):
 
 if __name__ == "__main__":
     from game import Game
-    from human import HumanPlayer
+    import utils
+    import argparse
+    from random import seed
 
-    G = Game(
-        [HumanPlayer("Alice", 0, debug=True), ActrPlayer("bob", 1)],
-        seed="noshuffle",
+    parser = argparse.ArgumentParser(description="ACT-R agent for Hanabi")
+    parser.add_argument(
+        "--human", action="store_true", help="play the ACT-R with a cli interface"
     )
-    score = G.run()
-    print("score: ", score)
+    parser.add_argument(
+        "--switch", action="store_true", help="change the order of the players"
+    )
+    parser.add_argument("--debug", action="store_true", help="enable debugging message")
+    parser.add_argument(
+        "--seed", default=0, help="seed for initializing the deck", type=int
+    )
+    parser.add_argument("--runs", default=1, help="number of games", type=int)
+    parser.add_argument("--plot", action="store_true", help="plot scores")
+    parser.add_argument(
+        "--png",
+        default="performance_curve.png",
+        help="file name for score plot",
+        type=str,
+    )
+    args = parser.parse_args()
+    utils.debugging = args.debug
+
+    if args.human:
+        from human import HumanPlayer
+
+        if args.switch:
+            players = [
+                ActrPlayer("Alice", 0, debug=args.debug),
+                HumanPlayer("Bob", 1, debug=args.debug),
+            ]
+        else:
+            players = [
+                HumanPlayer("Alice", 0, debug=args.debug),
+                ActrPlayer("Bob", 1, debug=args.debug),
+            ]
+    else:
+        from baseline import HardcodedPlayer
+
+        if args.switch:
+            players = [
+                ActrPlayer("Alice", 0, debug=args.debug),
+                HardcodedPlayer("Bob", 1),
+            ]
+        else:
+            players = [
+                HardcodedPlayer("Alice", 0),
+                ActrPlayer("Bob", 1, debug=args.debug),
+            ]
+
+    if args.runs == 1:
+        G = Game(players, seed=args.seed)
+        score = G.run()
+        print(
+            "score: ",
+            score,
+            " hints: ",
+            G.hints,
+            " hits: ",
+            G.hits,
+            " turns: ",
+            G.turns,
+        )
+    else:
+        seed(args.seed)
+        scores = []
+        G = Game(players)
+        for i in range(args.runs):
+            scores.append(G.run())
+            G.reset(None)
+        print(
+            "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
+                args.runs,
+                sum(scores) / args.runs,
+                min(scores),
+                max(scores),
+                max(set(scores), key=scores.count),
+            )
+        )
+
+        if args.plot:
+            from matplotlib import pyplot as plt
+
+            plt.plot(range(len(scores)), scores)
+            plt.xlabel("games")
+            plt.ylabel("score")
+            plt.title("score of ACT-R agent over {} games".format(args.runs))
+            plt.savefig(args.png)

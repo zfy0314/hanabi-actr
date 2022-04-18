@@ -258,7 +258,13 @@ if __name__ == "__main__":
         seed(args.seed)
         scores = []
         G = Game(players)
-        for i in range(args.runs):
+        try:
+            from tqdm import tqdm
+
+            bar = tqdm(list(range(args.runs)))
+        except ModuleNotFoundError:
+            bar = range(args.runs)
+        for i in bar:
             scores.append(G.run())
             G.reset(None)
         print(

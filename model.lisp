@@ -35,7 +35,12 @@
 
 
 
-; helper
+;; Helper Functions ;;
+
+; finding some visual location
+; start by requesting a visual location, and set goal state to attend, misc1 to
+; the state for successfully finding a visual location, misc2 to the state for
+; failure
 (P h-attend-success
    =goal>
       isa         goal-type
@@ -62,7 +67,9 @@
       state       =n
 )
 
-; reasonable strategies
+;; Reasonable Strategies ;;
+
+; find and play a card that is certainly playable
 (P s-play-definitely-playable
    =goal>
       isa         goal-type
@@ -83,6 +90,7 @@
       next        blue
 )
 
+; find and play a card that has been hinted in the past and is potentially playable
 (P s-play-potentially-playable
    =goal>
       isa         goal-type
@@ -118,6 +126,8 @@
       yellow      t
 )
 
+; find and play a card that has been hinted recently and is potentially playable
+; if there are more than one card corresponds to the hint, play the right-most
 (P s-play-just-hinted-right
    =goal>
       isa         goal-type
@@ -148,6 +158,7 @@
       screen-y    highest
 )
 
+; find and discard a card that is definitely not playable
 (P s-discard-useless
    =goal>
       isa         goal-type
@@ -172,6 +183,7 @@
       next        blue
 )
 
+; find and discard a card that is never hinted before (from old to new)
 (P s-discard-unhinted
    =goal>
       isa         goal-type
@@ -192,6 +204,7 @@
       screen-y    lowest
 )
 
+; discard a card at random
 (P s-discard-random
    =goal>
       isa         goal-type
@@ -208,6 +221,7 @@
       owner       model
 )
 
+; give an unambiguous hint to the partner to play a card
 (P s-hint-to-play-right
    =goal>
       isa         goal-type

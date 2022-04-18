@@ -1,7 +1,7 @@
 (clear-all)
 
 (define-model hanabi
-(sgp :v t :esc t :egs 1 :show-focus f :ul t :ult t :needs-mouse t)
+(sgp :v t :esc t :egs 0.5 :show-focus f :ul t :ult t :needs-mouse t)
 
 (chunk-type (card-loc (:include visual-location)) color rank owner index count)
 (chunk-type (card-obj (:include visual-object))   color rank owner index count)
@@ -172,16 +172,42 @@
       next        blue
 )
 
-; (P s-discard-least-info
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     < hint        8
-; ==>
-;    =goal>
-;       state       discard-least-info-0
-; )
-;
+(P s-discard-unhinted
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+      s5          t
+==>
+   =goal>
+      state       attend
+      misc1       discard-unhinted-success
+      misc2       discard-unhinted-not-found
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      color       nil
+      rank        nil
+      screen-y    lowest
+)
+
+(P s-discard-random
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+==>
+   =goal>
+      state       attend
+      misc1       discard-random
+      misc2       start
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+)
+
 ; (P s-discard
 ;    =goal>
 ;       isa         goal-type
@@ -1453,6 +1479,52 @@
 
 
 
+; discard-unhinted
+(P p-discard-unhinted-success
+   =goal>
+      isa         goal-type
+      state       discard-unhinted-success
+   =visual>
+      isa         knowledge-loc
+      owner       model
+      index       =i
+==>
+   =goal>
+      state       discard
+   +imaginal>
+      isa         imaginal-type
+      key         =i
+)
+
+(P p-discard-unhinted-not-found
+   =goal>
+      isa         goal-type
+      state       discard-unhinted-not-found
+==>
+   =goal>
+      state       start
+      s5          nil
+)
+
+
+
+; discard-random
+(P p-discard-random-second-step
+   =goal>
+      isa         goal-type
+      state       discard-random
+   =visual>
+      isa         knowledge-loc
+      owner       model
+      index       =i
+==>
+   =goal>
+      state       discard
+   +imaginal>
+      isa         imaginal-type
+      key         =i
+)
+
 
 
 ; feedback for utility learning
@@ -1569,5 +1641,11 @@
 )
 
 (goal-focus goal)
+
+(spp inform-play-successful :reward 10)
+(spp inform-play-unsuccessful :reward -8)
+(spp inform-discard-useless :reward 6)
+(spp inform-discard-neutral :reward 2)
+(spp inform-discard-playable :reward -6)
 
 )

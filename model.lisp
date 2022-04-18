@@ -15,16 +15,16 @@
 )
 (chunk-type imaginal-type blue green red yellow white one two three four five key)
 
-(chunk-type color-iter prev next)
-(chunk-type rank-iter prev next index)
+(chunk-type color-iter prev next cindex)
+(chunk-type rank-iter prev next rindex)
 
 (add-dm
    (goal isa goal-type state start)
-   (c0 isa color-iter prev nil   next blue  )
-   (c1 isa color-iter prev blue  next green )
-   (c2 isa color-iter prev green next red   )
-   (c3 isa color-iter prev red   next white )
-   (c4 isa color-iter prev white next yellow)
+   (c0 isa color-iter prev nil   next blue   cindex 1)
+   (c1 isa color-iter prev blue  next green  cindex 2)
+   (c2 isa color-iter prev green next red    cindex 3)
+   (c3 isa color-iter prev red   next white  cindex 4)
+   (c4 isa color-iter prev white next yellow cindex 5)
    (r0 isa rank-iter prev zero  next one   rindex 0)
    (r1 isa rank-iter prev one   next two   rindex 1)
    (r2 isa rank-iter prev two   next three rindex 2)
@@ -208,25 +208,23 @@
       owner       model
 )
 
-; (P s-discard
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     < hint        8
-; ==>
-;    =goal>
-;       state       discard-0
-; )
-;
-; (P s-hint-to-play
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     > hint        0
-; ==>
-;    =goal>
-;       state       hint-to-play-0
-; )
+(P s-hint-to-play-right
+   =goal>
+      isa         goal-type
+      state       start
+    > hints       0
+      s6          t
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-partner
+      misc2       hint-to-play-failure
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+      screen-y    highest
+)
 
 ; (P s-hint-to-discard
 ; )
@@ -1524,6 +1522,211 @@
       isa         imaginal-type
       key         =i
 )
+
+
+
+; hint-to-play
+(P p-hint-to-play-init
+   =goal>
+      isa         goal-type
+      state       hint-to-play-init
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-partner
+      misc2       hint-to-play-failure
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+      screen-y    highest
+    < screen-y    current
+)
+
+(P p-hint-to-play-failure
+   =goal>
+      isa         goal-type
+      state       hint-to-play-failure
+==>
+   =goal>
+      state       start
+      s6          nil
+   -visual-location>
+)
+
+(P p-hint-to-play-test-partner-success
+   =visual>
+      isa         card-obj
+      owner       partner
+      color       =c
+      rank        =r
+   !bind! =s (- =r 1)
+   =goal>
+      isa         goal-type
+      state       hint-to-play-test-partner
+      =c          =s
+==>
+   =goal>
+      state       hint-to-play
+   =visual>
+   +imaginal>
+      isa         imaginal-type
+      blue        t
+      one         t
+)
+
+(P p-hint-to-play-test-partner-no-unambiguous-hint
+   =goal>
+      isa         goal-type
+      state       hint-to-play
+      misc3       =p
+   =imaginal>
+      isa         imaginal-type
+      blue        nil
+      one         nil
+==>
+   =goal>
+      state       hint-to-play-init
+   +visual>
+      cmd         move-attention
+      screen-pos  =p
+   -imaginal>
+)
+
+(P p-hint-to-play-test-partner-failure
+   =visual>
+      isa         card-obj
+      owner       partner
+      color       =c
+      rank        =r
+   !bind! =s (- =r 1)
+   =goal>
+      isa         goal-type
+      state       hint-to-play-test-partner
+    - =c          =s
+==>
+   =goal>
+      state       hint-to-play-init
+)
+
+(P p-hint-to-play-test-partner-color
+   =visual>
+      isa         card-obj
+      owner       partner
+      color       =c
+      screen-pos  =p
+   =goal>
+      isa         goal-type
+      state       hint-to-play
+   =imaginal>
+      isa         imaginal-type
+      blue        t
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-color-found
+      misc2       hint-to-play-test-color-not-found
+      misc3       =p
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+    > screen-y    current
+      color       =c
+   +retrieval>
+      isa         color-iter
+      next        =c
+   =imaginal>
+)
+
+(P p-hint-to-play-test-partner-color-success
+   =goal>
+      isa         goal-type
+      state       hint-to-play-test-color-not-found
+   =retrieval>
+      isa         color-iter
+      cindex      =i
+==>
+   =goal>
+      state       hint-color
+   +imaginal>
+      isa         imaginal-type
+      key         =i
+)
+
+(P p-hint-to-play-test-partner-color-failure
+   =goal>
+      isa         goal-type
+      state       hint-to-play-test-color-found
+      misc3       =p
+   =retrieval>
+      isa         color-iter
+      cindex      =i
+   =imaginal>
+==>
+   =goal>
+      state       hint-to-play
+   =imaginal>
+      blue        nil
+   +visual>
+      cmd         move-attention
+      screen-pos  =p
+)
+
+(P p-hint-to-play-test-partner-rank
+   =visual>
+      isa         card-obj
+      owner       partner
+      rank        =r
+      screen-pos  =p
+   =goal>
+      isa         goal-type
+      state       hint-to-play
+   =imaginal>
+      isa         imaginal-type
+      one         t
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-rank-found
+      misc2       hint-to-play-test-rank-not-found
+      misc3       =p
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+    > screen-y    current
+      rank        =r
+   =imaginal>
+      isa         imaginal-type
+      key         =r
+)
+
+(P p-hint-to-play-test-partner-rank-success
+   =goal>
+      isa         goal-type
+      state       hint-to-play-test-rank-not-found
+==>
+   =goal>
+      state       hint-rank
+)
+
+(P p-hint-to-play-test-partner-rank-failure
+   =goal>
+      isa         goal-type
+      state       hint-to-play-test-rank-found
+      misc3       =p
+   =imaginal>
+==>
+   =goal>
+      state       hint-to-play
+   =imaginal>
+      one         nil
+   +visual>
+      cmd         move-attention
+      screen-pos  =p
+)
+
 
 
 

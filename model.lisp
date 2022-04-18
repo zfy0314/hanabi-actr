@@ -78,7 +78,9 @@
       kind        knowledge-obj
       owner       model
       screen-y    lowest
-   -imaginal>
+   +retrieval>
+      isa         color-iter
+      next        blue
 )
 
 (P s-play-potentially-playable
@@ -223,6 +225,9 @@
       owner       model
       screen-y    lowest
     > screen-y    current
+   +retrieval>
+      isa         color-iter
+      next        blue
 )
 
 (P p-play-definitely-playable-failure
@@ -290,229 +295,84 @@
       state       play-definitely-playable-init
 )
 
-(P p-play-definitely-playable-test-my-blue-impossible
+(P p-play-definitely-playable-test-my-color-impossible
+   =retrieval>
+      isa         color-iter
+      next        =c
    =visual>
       isa         knowledge-obj
       owner       model
       color       nil
     - rank        nil
-    - blue        t
+    - =c          t
    =goal>
       isa         goal-type
       state       play-definitely-playable-test-my
 ==>
    =goal>
-      state       play-definitely-playable-test-my-green
+      state       play-definitely-playable-test-my
    =visual>
+   +retrieval>
+      isa         color-iter
+      prev        =c
 )
 
-(P p-play-definitely-playable-test-my-blue-possible-good
+(P p-play-definitely-playable-test-my-color-possible-good
+   =retrieval>
+      isa         color-iter
+      next        =c
    =visual>
       isa         knowledge-obj
       owner       model
       color       nil
     - rank        nil
       rank        =r
-      blue        t
+      =c          t
    !bind! =s (- =r 1)
    =goal>
       isa         goal-type
       state       play-definitely-playable-test-my
-      blue        =s
+      =c          =s
 ==>
    =goal>
-      state       play-definitely-playable-test-my-green
+      state       play-definitely-playable-test-my
    =visual>
+   +retrieval>
+      isa         color-iter
+      prev        =c
 )
 
-(P p-play-definitely-playable-test-my-blue-possible-bad
+(P p-play-definitely-playable-test-my-color-possible-bad
+   =retrieval>
+      isa         color-iter
+      next        =c
    =visual>
       isa         knowledge-obj
       owner       model
       color       nil
     - rank        nil
       rank        =r
-      blue        t
+      =c          t
    !bind! =s (- =r 1)
    =goal>
       isa         goal-type
       state       play-definitely-playable-test-my
-    - blue        =s
+    - =c          =s
 ==>
    =goal>
       state       play-definitely-playable-init
 )
 
-(P p-play-definitely-playable-test-my-green-impossible
+(P p-play-definitely-playable-test-my-finish
+   ?retrieval>
+      buffer      failure
    =visual>
       isa         knowledge-obj
       owner       model
-      color       nil
-    - rank        nil
-    - green       t
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-green
-==>
-   =goal>
-      state       play-definitely-playable-test-my-red
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-green-possible-good
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      green       t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-green
-      blue        =s
-==>
-   =goal>
-      state       play-definitely-playable-test-my-red
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-green-possible-bad
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      green       t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-green
-    - green       =s
-==>
-   =goal>
-      state       play-definitely-playable-init
-)
-
-(P p-play-definitely-playable-test-my-red-impossible
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-    - red         t
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-red
-==>
-   =goal>
-      state       play-definitely-playable-test-my-white
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-red-possible-good
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      red         t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-red
-      red         =s
-==>
-   =goal>
-      state       play-definitely-playable-test-my-white
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-red-possible-bad
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      red         t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-red
-    - red         =s
-==>
-   =goal>
-      state       play-definitely-playable-init
-)
-
-(P p-play-definitely-playable-test-my-white-impossible
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-    - white       t
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-white
-==>
-   =goal>
-      state       play-definitely-playable-test-my-yellow
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-white-possible-good
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      white       t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-white
-      white       =s
-==>
-   =goal>
-      state       play-definitely-playable-test-my-yellow
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-white-possible-bad
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      white       t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-white
-    - white       =s
-==>
-   =goal>
-      state       play-definitely-playable-init
-)
-
-(P p-play-definitely-playable-test-my-yellow-impossible
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-    - yellow      t
       index       =i
    =goal>
       isa         goal-type
-      state       play-definitely-playable-test-my-yellow
+      state       play-definitely-playable-test-my
 ==>
    =goal>
       state       play
@@ -520,47 +380,6 @@
       isa         imaginal-type
       key         =i
    =visual>
-)
-
-(P p-play-definitely-playable-test-my-yellow-possible-good
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      yellow      t
-      index       =i
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-yellow
-      yellow      =s
-==>
-   =goal>
-      state       play
-   +imaginal>
-      isa         imaginal-type
-      key         =i
-   =visual>
-)
-
-(P p-play-definitely-playable-test-my-yellow-possible-bad
-   =visual>
-      isa         knowledge-obj
-      owner       model
-      color       nil
-    - rank        nil
-      rank        =r
-      yellow      t
-   !bind! =s (- =r 1)
-   =goal>
-      isa         goal-type
-      state       play-definitely-playable-test-my-yellow
-    - yellow      =s
-==>
-   =goal>
-      state       play-definitely-playable-init
 )
 
 ; play-potentially-playable
@@ -617,7 +436,7 @@
       isa         goal-type
       state       play-potentially-playable
       blue        =r
-   !bind! =s (- =r 1)
+   !bind! =s (+ =r 1)
    =imaginal>
       isa         imaginal-type
       blue        t
@@ -643,7 +462,7 @@
       isa         goal-type
       state       play-potentially-playable
       green       =r
-   !bind! =s (- =r 1)
+   !bind! =s (+ =r 1)
    =imaginal>
       isa         imaginal-type
       green       t
@@ -669,7 +488,7 @@
       isa         goal-type
       state       play-potentially-playable
       red         =r
-   !bind! =s (- =r 1)
+   !bind! =s (+ =r 1)
    =imaginal>
       isa         imaginal-type
       red         t
@@ -695,7 +514,7 @@
       isa         goal-type
       state       play-potentially-playable
       white       =r
-   !bind! =s (- =r 1)
+   !bind! =s (+ =r 1)
    =imaginal>
       isa         imaginal-type
       white       t
@@ -721,7 +540,7 @@
       isa         goal-type
       state       play-potentially-playable
       yellow      =r
-   !bind! =s (- =r 1)
+   !bind! =s (+ =r 1)
    =imaginal>
       isa         imaginal-type
       yellow      t

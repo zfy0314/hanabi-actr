@@ -65,6 +65,9 @@ class HumanPlayer(Player):
     def inform(self, pnr, action, game):
         print(pnr, "played", action)
 
+    def reset(self):
+        pass
+
 
 if __name__ == "__main__":
     from game import Game

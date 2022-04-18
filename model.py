@@ -13,6 +13,7 @@ class ActrPlayer(Player):
         actr.load_act_r_model(model_path)
         actr.install_device(actr.open_exp_window("Hanabi", visible=False))
         self.response = ""
+        self.last_hinted = set()
 
         self.ATmap = [None, "C", "R", "P", "D"]
         self.ranks = ["zero", "one", "two", "three", "four", "five"]
@@ -40,20 +41,21 @@ class ActrPlayer(Player):
 
     def _show_state(self, game):
         actr.clear_exp_window()
+        actr.delete_all_visicon_features()
         visicons = []
 
         # board
-        for i, color in enumerate(Color):
-            visicons.append(
-                self._card_info(
-                    "card",
-                    0,
-                    i * 10,
-                    color.name,
-                    self.ranks[game.board[color]],
-                    "board",
-                )
-            )
+        # for i, color in enumerate(Color):
+        #     visicons.append(
+        #         self._card_info(
+        #             "card",
+        #             0,
+        #             i * 10,
+        #             color.name,
+        #             self.ranks[game.board[color]],
+        #             "board",
+        #         )
+        #     )
 
         # partner's hand and their knowledge
         for i, card in enumerate(game.hands[self.ppnr].cards):
@@ -63,7 +65,7 @@ class ActrPlayer(Player):
                     20,
                     i * 10,
                     card.get_color(self.pnr).name,
-                    self.ranks[card.get_rank(self.pnr)],
+                    card.get_rank(self.pnr).value,
                     "partner",
                     index=i + 1,
                 )
@@ -78,7 +80,7 @@ class ActrPlayer(Player):
                     40,
                     i * 10,
                     None if len(pcolors) > 1 else list(pcolors)[0].name,
-                    None if len(pranks) > 1 else list(pranks)[0].name,
+                    None if len(pranks) > 1 else list(pranks)[0].value,
                     "partner",
                     index=i + 1,
                 )
@@ -98,13 +100,13 @@ class ActrPlayer(Player):
                     60,
                     i * 10,
                     None if len(pcolors) > 1 else list(pcolors)[0].name,
-                    None if len(pranks) > 1 else list(pranks)[0].name,
+                    None if len(pranks) > 1 else list(pranks)[0].value,
                     "model",
                     index=i + 1,
                 )
                 + kcolors
                 + kranks
-                + ["hinted", i + 1 in game.hands[self.pnr].last_hinted]
+                + ["hinted", i + 1 in self.last_hinted]
             )
 
         # trash
@@ -120,14 +122,21 @@ class ActrPlayer(Player):
 
     def _set_goal(self, state, game):
         goal = ["state", state, "hints", game.hints, "hits", game.hits]
+        goal += sum([[color.name, game.board[color]] for color in Color], [])
+        goal += sum([["s" + str(i), True] for i in range(1, 8)], [])
+        goal += ["misc1", None, "misc2", None]
         if actr.buffer_read("goal"):
             actr.mod_focus(*goal)
         else:
             actr.goal_focus(actr.define_chunks(["isa", "goal-type"] + goal)[0])
 
+    def _log_state(self, game):
+        self.state_hits = game.hits
+
     def get_action(self, game):
 
         # re-encode game state
+        self._log_state(game)
         self._show_state(game)
 
         # get response from model for choosing an action
@@ -138,7 +147,7 @@ class ActrPlayer(Player):
         )
         actr.monitor_command("output-key", "key-press")
         self._set_goal("start", game)
-        actr.run(100)
+        actr.run(20)
         actr.remove_command_monitor("output-key", "key-press")
         actr.remove_command("key-press")
 
@@ -149,7 +158,28 @@ class ActrPlayer(Player):
         return action
 
     def inform(self, pnr, action, game):
-        pass
+        if pnr == self.pnr:
+            self.last_hinted = set()
+        if action.type in [AT.hint_color, AT.hint_rank] and action.pnr == self.pnr:
+            self.last_hinted = game.hands[self.pnr].last_hinted
+        update = False
+        if action.type == AT.play:
+            if self.state_hits < game.hits:
+                self._set_goal("play-unsuccessful", game)
+            else:
+                self._set_goal("play-successful", game)
+        elif action.type == AT.discard:
+            card = game.trash.most_recent
+            card.game = game
+            if game.board.playable(card):
+                self._set_goal("discard-playable", game)
+            elif card.useless:
+                self._set_goal("discard-useless", game)
+            else:
+                self._set_goal("discard-neutral", game)
+        if update:
+            actr.run(10)
+            self._log_state(game)
 
 
 if __name__ == "__main__":
@@ -157,7 +187,8 @@ if __name__ == "__main__":
     from human import HumanPlayer
 
     G = Game(
-        [ActrPlayer("Alice", 0), HumanPlayer("bob", 1, debug=True)], seed="noshuffle"
+        [HumanPlayer("Alice", 0, debug=True), ActrPlayer("bob", 1)],
+        seed="noshuffle",
     )
     score = G.run()
     print("score: ", score)

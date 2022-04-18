@@ -269,6 +269,7 @@ class Board:
 class Trash:
     def __init__(self):
         self._count = {}
+        self._most_recent = None
 
     def __str__(self):
         res = "Trash:\n"
@@ -281,6 +282,7 @@ class Trash:
         return res
 
     def add(self, card):
+        self._most_recent = card
         self._count[card] = self.count(card) + 1
 
     def count(self, card):
@@ -294,3 +296,7 @@ class Trash:
         return [
             (c.name, r.name, self.count(Card(c, r))) for c, r in product(Color, Rank)
         ]
+
+    @property
+    def most_recent(self):
+        return self._most_recent

@@ -5,7 +5,9 @@ from utils import Color, Rank
 
 
 class ActrPlayer(Player):
-    def __init__(self, name, pnr, debug=False, model_path="ACT-R:final;model.lisp"):
+    def __init__(
+        self, name, pnr, debug=False, model_path="ACT-R:hanabi-actr;model.lisp"
+    ):
         self.name = name
         self.pnr = pnr
         self.ppnr = 1 - self.pnr

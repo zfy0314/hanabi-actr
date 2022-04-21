@@ -5,7 +5,9 @@ from utils import Color, Rank
 
 
 class ActrPlayer(Player):
-    def __init__(self, name, pnr, debug=False, model_path="ACT-R:final;model.lisp"):
+    def __init__(
+        self, name, pnr, debug=False, model_path="ACT-R:hanabi-actr;model.lisp"
+    ):
         self.name = name
         self.pnr = pnr
         self.ppnr = 1 - self.pnr
@@ -206,9 +208,16 @@ if __name__ == "__main__":
     parser.add_argument("--runs", default=1, help="number of games", type=int)
     parser.add_argument("--plot", action="store_true", help="plot scores")
     parser.add_argument(
-        "--png",
+        "--png_plot",
         default="performance_curve.png",
         help="file name for score plot",
+        type=str,
+    )
+    parser.add_argument("--dist", action="store_true", help="draw score distribution")
+    parser.add_argument(
+        "--png_dist",
+        default="actr_distribution.png",
+        help="file name for distribution plot",
         type=str,
     )
     args = parser.parse_args()
@@ -284,4 +293,15 @@ if __name__ == "__main__":
             plt.xlabel("games")
             plt.ylabel("score")
             plt.title("score of ACT-R agent over {} games".format(args.runs))
-            plt.savefig(args.png)
+            plt.savefig(args.png_plot)
+
+        if args.dist:
+            from matplotlib import pyplot as plt
+
+            plt.hist(scores, range(27), density=True)
+            plt.xlabel("score")
+            plt.ylabel("density")
+            plt.title(
+                "distribution of actr vs. baseline over {} games".format(args.runs)
+            )
+            plt.savefig(args.png_dist)

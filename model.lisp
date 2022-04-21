@@ -1,7 +1,8 @@
 (clear-all)
 
 (define-model hanabi
-(sgp :v t :esc t :egs 0.5 :show-focus f :ul t :ult t :needs-mouse t)
+(sgp :v t :esc t :egs 0.5 :show-focus f :ul t :ult t :needs-mouse t :ignore-buffers (visual visual-location imaginal goal))
+
 
 (chunk-type (card-loc (:include visual-location)) color rank owner index count)
 (chunk-type (card-obj (:include visual-object))   color rank owner index count)
@@ -1859,10 +1860,26 @@
 
 (goal-focus goal)
 
-(spp inform-play-successful :reward 10)
-(spp inform-play-unsuccessful :reward -8)
-(spp inform-discard-useless :reward 6)
-(spp inform-discard-neutral :reward 2)
-(spp inform-discard-playable :reward -6)
+(spp s-play-definitely-playable :u 10)
+(spp s-play-potentially-playable :u 2)
+(spp s-play-potentially-playable-only-when-low-hits :u 2)
+(spp s-play-just-hinted-right :u 8)
+(spp s-discard-useless :u 5)
+(spp s-discard-unhinted :u 3)
+(spp s-discard-random :u 1)
+(spp s-hint-to-play-right :u 6)
+
+(spp p-play-definitely-playable-failure :reward t)
+(spp p-play-potentially-playable-failure :reward t)
+(spp p-play-just-hinted-not-found :reward t)
+(spp p-discard-useless-failure :reward t)
+(spp p-discard-unhinted-not-found :reward t)
+(spp p-hint-to-play-failure :reward t)
+
+; (spp inform-play-successful :reward 10)
+; (spp inform-play-unsuccessful :reward -8)
+; (spp inform-discard-useless :reward 6)
+; (spp inform-discard-neutral :reward 2)
+; (spp inform-discard-playable :reward -6)
 
 )

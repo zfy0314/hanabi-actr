@@ -17,6 +17,7 @@ class ActrPlayer(Player):
         self.ATmap = [None, "C", "R", "P", "D"]
         self.ranks = ["zero", "one", "two", "three", "four", "five"]
         self.nrmap = [None, self.ppnr, self.ppnr, pnr, pnr]
+        self.reload()
         self.reset()
 
     def reset(self):

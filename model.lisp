@@ -241,6 +241,23 @@
       screen-y    highest
 )
 
+; hint a card at random
+(P s-hint-random
+   =goal>
+      isa         goal-type
+      state       start
+    = hints       8
+==>
+   =goal>
+      state       attend
+      misc1       hint-random
+      misc2       start
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+)
+
 ; (P s-hint-to-discard
 ; )
 ;
@@ -1540,6 +1557,56 @@
 
 
 
+; hint-random
+(P p-hint-random-color
+   =goal>
+      isa         goal-type
+      state       hint-random
+   =visual>
+      isa         card-loc
+      owner       partner
+      color       =c
+==>
+   =goal>
+      state       hint-color-second
+   +retrieval>
+      isa         color-iter
+      next        =c
+)
+
+(P p-hint-random-color-second-step
+   =goal>
+      isa         goal-type
+      state       hint-color-second
+   =retrieval>
+      isa         color-iter
+      cindex       =i
+==>
+   =goal>
+      state       hint-color
+   +imaginal>
+      isa         imaginal-type
+      key         =i
+)
+
+(P p-hint-random-rank
+   =goal>
+      isa         goal-type
+      state       hint-random
+   =visual>
+      isa         card-loc
+      owner       partner
+      rank        =r
+==>
+   =goal>
+      state       hint-rank
+   +imaginal>
+      isa         imaginal-type
+      key         =r
+)
+
+
+
 ; hint-to-play
 (P p-hint-to-play-init
    =goal>
@@ -1870,6 +1937,8 @@
 ; (spp s-discard-random :u 1)
 ; (spp s-hint-to-play-right :u 6)
 
+(spp s-hint-random :u -20 :reward t)
+
 (spp p-play-definitely-playable-failure :reward t)
 (spp p-play-potentially-playable-failure :reward t)
 (spp p-play-just-hinted-not-found :reward t)
@@ -1879,7 +1948,7 @@
 
 (spp inform-discard-neutral :reward t)
 (spp inform-play-successful :reward 30)
-(spp inform-play-unsuccessful :reward 0)
+(spp inform-play-unsuccessful :reward -10)
 (spp inform-discard-useless :reward 10)
 (spp inform-discard-playable :reward -10)
 

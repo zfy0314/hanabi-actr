@@ -11,11 +11,8 @@ class ActrPlayer(Player):
         self.name = name
         self.pnr = pnr
         self.ppnr = 1 - self.pnr
-
-        actr.load_act_r_model(model_path)
-        actr.install_device(actr.open_exp_window("Hanabi", visible=False))
-        actr.set_parameter_value(":v", debug)
-        self.response = ""
+        self.debug = debug
+        self.model_path = model_path
 
         self.ATmap = [None, "C", "R", "P", "D"]
         self.ranks = ["zero", "one", "two", "three", "four", "five"]
@@ -24,6 +21,12 @@ class ActrPlayer(Player):
 
     def reset(self):
         self.last_hinted = set()
+        self.response = ""
+
+    def reload(self):
+        actr.reset()
+        actr.install_device(actr.open_exp_window("Hanabi", visible=False))
+        actr.set_parameter_value(":v", self.debug)
 
     def _card_info(self, name, x, y, color, rank, owner, index=None, count=None):
         return [
@@ -49,19 +52,6 @@ class ActrPlayer(Player):
         actr.clear_exp_window()
         actr.delete_all_visicon_features()
         visicons = []
-
-        # board
-        # for i, color in enumerate(Color):
-        #     visicons.append(
-        #         self._card_info(
-        #             "card",
-        #             0,
-        #             i * 10,
-        #             color.name,
-        #             self.ranks[game.board[color]],
-        #             "board",
-        #         )
-        #     )
 
         # partner's hand and their knowledge
         for i, card in enumerate(game.hands[self.ppnr].cards):
@@ -170,11 +160,13 @@ class ActrPlayer(Player):
             self.last_hinted = game.hands[self.pnr].last_hinted
         update = False
         if action.type == AT.play:
+            update = True
             if self.state_hits < game.hits:
                 self._set_goal("play-unsuccessful", game)
             else:
                 self._set_goal("play-successful", game)
         elif action.type == AT.discard:
+            update = True
             card = game.trash.most_recent
             card.game = game
             if game.board.playable(card):
@@ -205,7 +197,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--seed", default=0, help="seed for initializing the deck", type=int
     )
-    parser.add_argument("--runs", default=1, help="number of games", type=int)
+    parser.add_argument("--runs", default=1, help="number of trials", type=int)
+    parser.add_argument(
+        "--games", default=1, help="number of games in each trial", type=int
+    )
     parser.add_argument("--plot", action="store_true", help="plot scores")
     parser.add_argument(
         "--png_plot",
@@ -250,7 +245,7 @@ if __name__ == "__main__":
                 ActrPlayer("Bob", 1, debug=args.debug),
             ]
 
-    if args.runs == 1:
+    if args.runs == 1 and args.games == 1:
         G = Game(players, seed=args.seed)
         score = G.run()
         print(
@@ -265,40 +260,51 @@ if __name__ == "__main__":
         )
     else:
         seed(args.seed)
-        scores = []
         G = Game(players)
         try:
             from tqdm import tqdm
 
-            bar = tqdm(list(range(args.runs)))
+            wrapper = tqdm
         except ModuleNotFoundError:
-            bar = range(args.runs)
-        for i in bar:
-            scores.append(G.run())
-            G.reset(None)
+            wrapper = lambda x: x  # noqa
+        scores = [[] for _ in range(args.games)]
+        for j in range(args.runs):
+            G.reload()
+            for i in wrapper(list(range(args.games))):
+                scores[i].append(G.run())
+                G.reset(None)
+        scores = [sorted(s) for s in scores]
+        scores_mean = [sum(s) / args.runs for s in scores]
+        scores_lower = [s[args.runs // 4] for s in scores]
+        scores_upper = [s[3 * args.runs // 4] for s in scores]
         print(
             "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
-                args.runs,
-                sum(scores) / args.runs,
-                min(scores),
-                max(scores),
-                max(set(scores), key=scores.count),
+                args.games,
+                sum(scores_mean) / args.games,
+                min(scores_mean),
+                max(scores_mean),
+                max(set(scores_mean), key=scores.count),
             )
         )
 
         if args.plot:
             from matplotlib import pyplot as plt
 
-            plt.plot(range(len(scores)), scores)
+            plt.plot(range(args.games), scores_mean)
+            plt.fill_between(range(args.games), scores_lower, scores_upper, alpha=0.2)
             plt.xlabel("games")
             plt.ylabel("score")
-            plt.title("score of ACT-R agent over {} games".format(args.runs))
+            plt.title(
+                "score of ACT-R agent over {} games averaged over {} trails".format(
+                    args.games, args.runs
+                )
+            )
             plt.savefig(args.png_plot)
 
         if args.dist:
             from matplotlib import pyplot as plt
 
-            plt.hist(scores, range(27), density=True)
+            plt.hist(scores_mean, range(27), density=True)
             plt.xlabel("score")
             plt.ylabel("density")
             plt.title(

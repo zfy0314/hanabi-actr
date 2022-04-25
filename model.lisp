@@ -1849,6 +1849,7 @@
    ?manual>
       state       free
    =imaginal>
+      isa         imaginal-type
       key         =key
 ==>
    =goal>
@@ -1860,14 +1861,14 @@
 
 (goal-focus goal)
 
-(spp s-play-definitely-playable :u 10)
-(spp s-play-potentially-playable :u 2)
-(spp s-play-potentially-playable-only-when-low-hits :u 2)
-(spp s-play-just-hinted-right :u 8)
-(spp s-discard-useless :u 5)
-(spp s-discard-unhinted :u 3)
-(spp s-discard-random :u 1)
-(spp s-hint-to-play-right :u 6)
+; (spp s-play-definitely-playable :u 10)
+; (spp s-play-potentially-playable :u 2)
+; (spp s-play-potentially-playable-only-when-low-hits :u 2)
+; (spp s-play-just-hinted-right :u 8)
+; (spp s-discard-useless :u 5)
+; (spp s-discard-unhinted :u 3)
+; (spp s-discard-random :u 1)
+; (spp s-hint-to-play-right :u 6)
 
 (spp p-play-definitely-playable-failure :reward t)
 (spp p-play-potentially-playable-failure :reward t)
@@ -1876,10 +1877,10 @@
 (spp p-discard-unhinted-not-found :reward t)
 (spp p-hint-to-play-failure :reward t)
 
-; (spp inform-play-successful :reward 10)
-; (spp inform-play-unsuccessful :reward -8)
-; (spp inform-discard-useless :reward 6)
-; (spp inform-discard-neutral :reward 2)
-; (spp inform-discard-playable :reward -6)
+(spp inform-discard-neutral :reward t)
+(spp inform-play-successful :reward 30)
+(spp inform-play-unsuccessful :reward 0)
+(spp inform-discard-useless :reward 10)
+(spp inform-discard-playable :reward -10)
 
 )

@@ -39,6 +39,12 @@ class Player:
     def __hash__(self):
         return hash(self.name) + self.pnr
 
+    def reset(self):
+        pass
+
+    def reload(self):
+        pass
+
     def get_action(self, game):
         pass
 

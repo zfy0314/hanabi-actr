@@ -22,6 +22,10 @@ class Game:
         for player in self.players:
             player.reset()
 
+    def reload(self):
+        for player in self.players:
+            player.reload()
+
     def turn(self):
         """A single turn for a single player"""
         self.turns += 1

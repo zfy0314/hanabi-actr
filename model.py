@@ -27,6 +27,7 @@ class ActrPlayer(Player):
 
     def reload(self):
         actr.reset()
+        actr.load_act_r_model(self.model_path)
         actr.install_device(actr.open_exp_window("Hanabi", visible=False))
         actr.set_parameter_value(":v", self.debug)
 
@@ -339,4 +340,4 @@ if __name__ == "__main__":
             plt.savefig(args.png_dist)
 
         if args.save_data:
-            pickle.dump(all_data, open(args.pkl_data, "w"))
+            pickle.dump(all_data, open(args.pkl_data, "wb"))

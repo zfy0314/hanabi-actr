@@ -10,7 +10,7 @@
 (chunk-type (knowledge-obj (:include visual-object))   blue green red white yellow one two three four five color rank hinted index owner)
 
 (chunk-type goal-type
-   state misc1 misc2 misc3                ; general control state
+   state misc1 misc2 misc3 misc4          ; general control state
    hints hits blue green red yellow white ; game state
    s1 s2 s3 s4 s5 s6 s7                   ; if attempted each strategy
 )
@@ -71,7 +71,7 @@
 ;; Reasonable Strategies ;;
 
 ; find and play a card that is certainly playable
-(P s-play-definitely-playable
+(P s-play-definitely-playable-left
    =goal>
       isa         goal-type
       state       start
@@ -81,11 +81,33 @@
       state       attend
       misc1       play-definitely-playable-test-my
       misc2       play-definitely-playable-failure
+      misc3       play-definitely-playable-init-left
    +visual-location>
       isa         knowledge-loc
       kind        knowledge-obj
       owner       model
       screen-y    lowest
+   +retrieval>
+      isa         color-iter
+      next        blue
+)
+
+(P s-play-definitely-playable-right
+   =goal>
+      isa         goal-type
+      state       start
+      s1          t
+==>
+   =goal>
+      state       attend
+      misc1       play-definitely-playable-test-my
+      misc2       play-definitely-playable-failure
+      misc3       play-definitely-playable-init-right
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    highest
    +retrieval>
       isa         color-iter
       next        blue
@@ -139,7 +161,7 @@
       state       attend
       misc1       play-just-hinted-test-my
       misc2       play-just-hinted-failure
-      misc3       play-just-hinted-right-init
+      misc3       play-just-hinted-init-right
    +imaginal>
       one         t
       two         t
@@ -159,8 +181,38 @@
       screen-y    highest
 )
 
+(P s-play-just-hinted-left
+   =goal>
+      isa         goal-type
+      state       start
+      s3          t
+==>
+   =goal>
+      state       attend
+      misc1       play-just-hinted-test-my
+      misc2       play-just-hinted-failure
+      misc3       play-just-hinted-init-left
+   +imaginal>
+      one         t
+      two         t
+      three       t
+      four        t
+      five        t
+      blue        t
+      green       t
+      red         t
+      white       t
+      yellow      t
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      hinted      t
+      screen-y    lowest
+)
+
 ; find and discard a card that is definitely not playable
-(P s-discard-useless
+(P s-discard-useless-left
    =goal>
       isa         goal-type
       state       start
@@ -171,7 +223,7 @@
       state       attend
       misc1       discard-useless-test-my
       misc2       discard-useless-failure
-      misc3       discard-useless-init
+      misc3       discard-useless-init-left
    +imaginal>
       yellow      5
    +visual-location>
@@ -184,8 +236,32 @@
       next        blue
 )
 
+(P s-discard-useless-right
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+      s4          t
+==>
+   =goal>
+      state       attend
+      misc1       discard-useless-test-my
+      misc2       discard-useless-failure
+      misc3       discard-useless-init-right
+   +imaginal>
+      yellow      5
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    highest
+   +retrieval>
+      isa         color-iter
+      next        blue
+)
+
 ; find and discard a card that is never hinted before (from old to new)
-(P s-discard-unhinted
+(P s-discard-unhinted-left
    =goal>
       isa         goal-type
       state       start
@@ -203,6 +279,26 @@
       color       nil
       rank        nil
       screen-y    lowest
+)
+
+(P s-discard-unhinted-right
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+      s5          t
+==>
+   =goal>
+      state       attend
+      misc1       discard-unhinted-success
+      misc2       discard-unhinted-not-found
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      color       nil
+      rank        nil
+      screen-y    highest
 )
 
 ; discard a card at random
@@ -234,11 +330,31 @@
       state       attend
       misc1       hint-to-play-test-partner
       misc2       hint-to-play-failure
+      misc3       hint-to-play-init-right
    +visual-location>
       isa         card-loc
       kind        card-obj
       owner       partner
       screen-y    highest
+)
+
+(P s-hint-to-play-left
+   =goal>
+      isa         goal-type
+      state       start
+    > hints       0
+      s6          t
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-partner
+      misc2       hint-to-play-failure
+      misc3       hint-to-play-init-left
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+      screen-y    lowest
 )
 
 ; hint a card at random
@@ -266,21 +382,43 @@
 
 
 ; play-definitely-playable
-(P p-play-definitely-playable-init
+(P p-play-definitely-playable-init-left
    =goal>
       isa         goal-type
-      state       play-definitely-playable-init
+      state       play-definitely-playable-init-left
 ==>
    =goal>
       state       attend
       misc1       play-definitely-playable-test-my
       misc2       play-definitely-playable-failure
+      misc3       play-definitely-playable-init-left
    +visual-location>
       isa         knowledge-loc
       kind        knowledge-obj
       owner       model
       screen-y    lowest
     > screen-y    current
+   +retrieval>
+      isa         color-iter
+      next        blue
+)
+
+(P p-play-definitely-playable-init-right
+   =goal>
+      isa         goal-type
+      state       play-definitely-playable-init-right
+==>
+   =goal>
+      state       attend
+      misc1       play-definitely-playable-test-my
+      misc2       play-definitely-playable-failure
+      misc3       play-definitely-playable-init-right
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    highest
+    < screen-y    current
    +retrieval>
       isa         color-iter
       next        blue
@@ -332,10 +470,11 @@
    =goal>
       isa         goal-type
       state       play-definitely-playable-test-my
+      misc3       =fallback
     - =c          =s
 ==>
    =goal>
-      state       play-definitely-playable-init
+      state       =fallback
 )
 
 (P p-play-definitely-playable-test-my-unknown-rank
@@ -346,9 +485,10 @@
    =goal>
       isa         goal-type
       state       play-definitely-playable-test-my
+      misc3       =fallback
 ==>
    =goal>
-      state       play-definitely-playable-init
+      state       =fallback
 )
 
 (P p-play-definitely-playable-test-my-color-impossible
@@ -414,9 +554,10 @@
       isa         goal-type
       state       play-definitely-playable-test-my
     - =c          =s
+      misc3       =fallback
 ==>
    =goal>
-      state       play-definitely-playable-init
+      state       =fallback
 )
 
 (P p-play-definitely-playable-test-my-finish
@@ -630,16 +771,16 @@
    -imaginal>
 )
 
-(P p-play-just-hinted-right-init
+(P p-play-just-hinted-init-right
    =goal>
       isa         goal-type
-      state       play-just-hinted-right-init
+      state       play-just-hinted-init-right
 ==>
    =goal>
       state       attend
       misc1       play-just-hinted-test-my
       misc2       play-just-hinted-failure
-      misc3       play-just-hinted-right-init
+      misc3       play-just-hinted-init-right
    +imaginal>
       one         t
       two         t
@@ -658,6 +799,36 @@
       hinted      t
       screen-y    highest
     < screen-y    current
+)
+
+(P p-play-just-hinted-init-left
+   =goal>
+      isa         goal-type
+      state       play-just-hinted-init-left
+==>
+   =goal>
+      state       attend
+      misc1       play-just-hinted-test-my
+      misc2       play-just-hinted-failure
+      misc3       play-just-hinted-init-left
+   +imaginal>
+      one         t
+      two         t
+      three       t
+      four        t
+      five        t
+      blue        t
+      green       t
+      red         t
+      white       t
+      yellow      t
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      hinted      t
+      screen-y    lowest
+    > screen-y    current
 )
 
 (P p-play-just-hinted-check-colors-failed
@@ -1352,16 +1523,16 @@
 
 
 ; discard-useless
-(P p-discard-useless-init
+(P p-discard-useless-init-left
    =goal>
       isa         goal-type
-      state       discard-useless-init
+      state       discard-useless-init-left
 ==>
    =goal>
       state       attend
       misc1       discard-useless-test-my
       misc2       discard-useless-failure
-      misc3       discard-useless-init
+      misc3       discard-useless-init-left
    +imaginal>
       yellow      5
    +visual-location>
@@ -1370,6 +1541,29 @@
       owner       model
       screen-y    lowest
     > screen-y    current
+   +retrieval>
+      isa         color-iter
+      next        green
+)
+
+(P p-discard-useless-init-right
+   =goal>
+      isa         goal-type
+      state       discard-useless-init-right
+==>
+   =goal>
+      state       attend
+      misc1       discard-useless-test-my
+      misc2       discard-useless-failure
+      misc3       discard-useless-init-right
+   +imaginal>
+      yellow      5
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    highest
+    < screen-y    current
    +retrieval>
       isa         color-iter
       next        green
@@ -1478,13 +1672,14 @@
    =goal>
       isa         goal-type
       state       discard-useless-test-my-rank
+      misc3       =fallback
    =visual>
       isa         knowledge-loc
       owner       model
       =nr         t
 ==>
    =goal>
-      state       discard-useless-init
+      state       =fallback
    -retrieval>
 )
 
@@ -1608,21 +1803,40 @@
 
 
 ; hint-to-play
-(P p-hint-to-play-init
+(P p-hint-to-play-init-right
    =goal>
       isa         goal-type
-      state       hint-to-play-init
+      state       hint-to-play-init-right
 ==>
    =goal>
       state       attend
       misc1       hint-to-play-test-partner
       misc2       hint-to-play-failure
+      misc3       hint-to-play-init-right
    +visual-location>
       isa         card-loc
       kind        card-obj
       owner       partner
       screen-y    highest
     < screen-y    current
+)
+
+(P p-hint-to-play-init-left
+   =goal>
+      isa         goal-type
+      state       hint-to-play-init-left
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-partner
+      misc2       hint-to-play-failure
+      misc3       hint-to-play-init-left
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+      screen-y    lowest
+    > screen-y    current
 )
 
 (P p-hint-to-play-failure
@@ -1661,14 +1875,15 @@
    =goal>
       isa         goal-type
       state       hint-to-play
-      misc3       =p
+      misc3       =fallback
+      misc4       =p
    =imaginal>
       isa         imaginal-type
       blue        nil
       one         nil
 ==>
    =goal>
-      state       hint-to-play-init
+      state       =fallback
    +visual>
       cmd         move-attention
       screen-pos  =p
@@ -1685,10 +1900,11 @@
    =goal>
       isa         goal-type
       state       hint-to-play-test-partner
+      misc3       =fallback
     - =c          =s
 ==>
    =goal>
-      state       hint-to-play-init
+      state       =fallback
 )
 
 (P p-hint-to-play-test-partner-color
@@ -1700,6 +1916,7 @@
    =goal>
       isa         goal-type
       state       hint-to-play
+      misc3       =fallback
    =imaginal>
       isa         imaginal-type
       blue        t
@@ -1708,7 +1925,8 @@
       state       attend
       misc1       hint-to-play-test-color-found
       misc2       hint-to-play-test-color-not-found
-      misc3       =p
+      misc3       =fallback
+      misc4       =p
    +visual-location>
       isa         card-loc
       kind        card-obj
@@ -1740,7 +1958,7 @@
    =goal>
       isa         goal-type
       state       hint-to-play-test-color-found
-      misc3       =p
+      misc4       =p
    =retrieval>
       isa         color-iter
       cindex      =i
@@ -1772,7 +1990,7 @@
       state       attend
       misc1       hint-to-play-test-rank-found
       misc2       hint-to-play-test-rank-not-found
-      misc3       =p
+      misc4       =p
    +visual-location>
       isa         card-loc
       kind        card-obj
@@ -1797,7 +2015,7 @@
    =goal>
       isa         goal-type
       state       hint-to-play-test-rank-found
-      misc3       =p
+      misc4       =p
    =imaginal>
 ==>
    =goal>
@@ -1927,15 +2145,6 @@
 )
 
 (goal-focus goal)
-
-; (spp s-play-definitely-playable :u 10)
-; (spp s-play-potentially-playable :u 2)
-; (spp s-play-potentially-playable-only-when-low-hits :u 2)
-; (spp s-play-just-hinted-right :u 8)
-; (spp s-discard-useless :u 5)
-; (spp s-discard-unhinted :u 3)
-; (spp s-discard-random :u 1)
-; (spp s-hint-to-play-right :u 6)
 
 (spp s-hint-random :u -20 :reward t)
 

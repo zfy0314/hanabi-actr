@@ -1,3 +1,5 @@
+import pickle
+
 import actr
 from player import ActionType as AT
 from player import Action, Player
@@ -18,7 +20,6 @@ class ActrPlayer(Player):
         self.ranks = ["zero", "one", "two", "three", "four", "five"]
         self.nrmap = [None, self.ppnr, self.ppnr, pnr, pnr]
         self.reload()
-        self.reset()
 
     def reset(self):
         self.last_hinted = set()
@@ -202,6 +203,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--games", default=1, help="number of games in each trial", type=int
     )
+    parser.add_argument(
+        "--save_data",
+        action="store_true",
+        help="save the game states into a pickle file",
+    )
+    parser.add_argument(
+        "--pkl_data",
+        default="actr_data.pkl",
+        help="file name for game data",
+        type=str,
+    )
     parser.add_argument("--plot", action="store_true", help="plot scores")
     parser.add_argument(
         "--png_plot",
@@ -262,6 +274,7 @@ if __name__ == "__main__":
     else:
         seed(args.seed)
         G = Game(players)
+        all_data = []
         try:
             from tqdm import tqdm
 
@@ -273,6 +286,16 @@ if __name__ == "__main__":
             G.reload()
             for i in wrapper(list(range(args.games))):
                 scores[i].append(G.run())
+                all_data.append(
+                    {
+                        "trial": j,
+                        "game": i,
+                        "score": G.score,
+                        "turns": G.turns,
+                        "hints": G.hints,
+                        "hits": G.hits,
+                    }
+                )
                 G.reset(None)
         scores = [sorted(s) for s in scores]
         scores_mean = [sum(s) / args.runs for s in scores]
@@ -291,8 +314,10 @@ if __name__ == "__main__":
         if args.plot:
             from matplotlib import pyplot as plt
 
-            plt.plot(range(args.games), scores_mean)
-            plt.fill_between(range(args.games), scores_lower, scores_upper, alpha=0.2)
+            plt.plot(range(1, 1 + args.games), scores_mean)
+            plt.fill_between(
+                range(1, 1 + args.games), scores_lower, scores_upper, alpha=0.2
+            )
             plt.xlabel("games")
             plt.ylabel("score")
             plt.title(
@@ -312,3 +337,6 @@ if __name__ == "__main__":
                 "distribution of actr vs. baseline over {} games".format(args.runs)
             )
             plt.savefig(args.png_dist)
+
+        if args.save_data:
+            pickle.dump(all_data, open(args.pkl_data, "w"))

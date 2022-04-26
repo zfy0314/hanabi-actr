@@ -77,3 +77,7 @@ class Game:
         while self.turn():
             pass
         return self.board.score
+
+    @property
+    def score(self):
+        return self.board.score

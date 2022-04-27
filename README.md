@@ -90,4 +90,7 @@ python3 baseline.py -h
 ## ACTR Agent
 The idea of ACTR Agent is to start with productions that each corresponds to a reasonable idea (e.g. play a card whenever it is known to be playable; discard the unhinted cards; etc.), and use utility learning to learn a preference among the productions to match the partner (in this case the baseline agent). 
 The command for running ACTR agent is similar to those used by baseline agent. 
-With the only difference being using `--plot` to plot the trend of games instead of `--dist` (distribution).
+To recreate the plots in the final report, use the following commands
+```sh
+python3 model.py --runs=200 --games=10 --plot --save_data
+```

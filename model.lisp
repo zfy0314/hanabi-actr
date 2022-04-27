@@ -92,26 +92,26 @@
       next        blue
 )
 
-; (P s-play-definitely-playable-right
-;    =goal>
-;       isa         goal-type
-;       state       start
-;       s1          t
-; ==>
-;    =goal>
-;       state       attend
-;       misc1       play-definitely-playable-test-my
-;       misc2       play-definitely-playable-failure
-;       misc3       play-definitely-playable-init-right
-;    +visual-location>
-;       isa         knowledge-loc
-;       kind        knowledge-obj
-;       owner       model
-;       screen-y    highest
-;    +retrieval>
-;       isa         color-iter
-;       next        blue
-; )
+(P s-play-definitely-playable-right
+   =goal>
+      isa         goal-type
+      state       start
+      s1          t
+==>
+   =goal>
+      state       attend
+      misc1       play-definitely-playable-test-my
+      misc2       play-definitely-playable-failure
+      misc3       play-definitely-playable-init-right
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    highest
+   +retrieval>
+      isa         color-iter
+      next        blue
+)
 
 ; find and play a card that has been hinted in the past and is potentially playable
 (P s-play-potentially-playable
@@ -181,35 +181,35 @@
       screen-y    highest
 )
 
-; (P s-play-just-hinted-left
-;    =goal>
-;       isa         goal-type
-;       state       start
-;       s3          t
-; ==>
-;    =goal>
-;       state       attend
-;       misc1       play-just-hinted-test-my
-;       misc2       play-just-hinted-failure
-;       misc3       play-just-hinted-init-left
-;    +imaginal>
-;       one         t
-;       two         t
-;       three       t
-;       four        t
-;       five        t
-;       blue        t
-;       green       t
-;       red         t
-;       white       t
-;       yellow      t
-;    +visual-location>
-;       isa         knowledge-loc
-;       kind        knowledge-obj
-;       owner       model
-;       hinted      t
-;       screen-y    lowest
-; )
+(P s-play-just-hinted-left
+   =goal>
+      isa         goal-type
+      state       start
+      s3          t
+==>
+   =goal>
+      state       attend
+      misc1       play-just-hinted-test-my
+      misc2       play-just-hinted-failure
+      misc3       play-just-hinted-init-left
+   +imaginal>
+      one         t
+      two         t
+      three       t
+      four        t
+      five        t
+      blue        t
+      green       t
+      red         t
+      white       t
+      yellow      t
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      hinted      t
+      screen-y    lowest
+)
 
 ; find and discard a card that is definitely not playable
 (P s-discard-useless-left
@@ -236,29 +236,29 @@
       next        blue
 )
 
-; (P s-discard-useless-right
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     < hints       8
-;       s4          t
-; ==>
-;    =goal>
-;       state       attend
-;       misc1       discard-useless-test-my
-;       misc2       discard-useless-failure
-;       misc3       discard-useless-init-right
-;    +imaginal>
-;       yellow      5
-;    +visual-location>
-;       isa         knowledge-loc
-;       kind        knowledge-obj
-;       owner       model
-;       screen-y    highest
-;    +retrieval>
-;       isa         color-iter
-;       next        blue
-; )
+(P s-discard-useless-right
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+      s4          t
+==>
+   =goal>
+      state       attend
+      misc1       discard-useless-test-my
+      misc2       discard-useless-failure
+      misc3       discard-useless-init-right
+   +imaginal>
+      yellow      5
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      screen-y    highest
+   +retrieval>
+      isa         color-iter
+      next        blue
+)
 
 ; find and discard a card that is never hinted before (from old to new)
 (P s-discard-unhinted-left
@@ -281,25 +281,25 @@
       screen-y    lowest
 )
 
-; (P s-discard-unhinted-right
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     < hints       8
-;       s5          t
-; ==>
-;    =goal>
-;       state       attend
-;       misc1       discard-unhinted-success
-;       misc2       discard-unhinted-not-found
-;    +visual-location>
-;       isa         knowledge-loc
-;       kind        knowledge-obj
-;       owner       model
-;       color       nil
-;       rank        nil
-;       screen-y    highest
-; )
+(P s-discard-unhinted-right
+   =goal>
+      isa         goal-type
+      state       start
+    < hints       8
+      s5          t
+==>
+   =goal>
+      state       attend
+      misc1       discard-unhinted-success
+      misc2       discard-unhinted-not-found
+   +visual-location>
+      isa         knowledge-loc
+      kind        knowledge-obj
+      owner       model
+      color       nil
+      rank        nil
+      screen-y    highest
+)
 
 ; discard a card at random
 (P s-discard-random
@@ -338,24 +338,24 @@
       screen-y    highest
 )
 
-; (P s-hint-to-play-left
-;    =goal>
-;       isa         goal-type
-;       state       start
-;     > hints       0
-;       s6          t
-; ==>
-;    =goal>
-;       state       attend
-;       misc1       hint-to-play-test-partner
-;       misc2       hint-to-play-failure
-;       misc3       hint-to-play-init-left
-;    +visual-location>
-;       isa         card-loc
-;       kind        card-obj
-;       owner       partner
-;       screen-y    lowest
-; )
+(P s-hint-to-play-left
+   =goal>
+      isa         goal-type
+      state       start
+    > hints       0
+      s6          t
+==>
+   =goal>
+      state       attend
+      misc1       hint-to-play-test-partner
+      misc2       hint-to-play-failure
+      misc3       hint-to-play-init-left
+   +visual-location>
+      isa         card-loc
+      kind        card-obj
+      owner       partner
+      screen-y    lowest
+)
 
 ; hint a card at random
 (P s-hint-random
@@ -2156,8 +2156,8 @@
 (spp p-hint-to-play-failure :reward t)
 
 (spp inform-discard-neutral :reward t)
-(spp inform-play-successful :reward 30)
+(spp inform-play-successful :reward 40)
 (spp inform-play-unsuccessful :reward -10)
-(spp inform-discard-useless :reward 10)
+(spp inform-discard-useless :reward 30)
 (spp inform-discard-playable :reward -10)
 )

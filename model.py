@@ -322,7 +322,7 @@ if __name__ == "__main__":
             plt.xlabel("games")
             plt.ylabel("score")
             plt.title(
-                "score of ACT-R agent over {} games averaged over {} trails".format(
+                "score of ACT-R agent over {} games averaged over {} trials".format(
                     args.games, args.runs
                 )
             )

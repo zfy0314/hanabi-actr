@@ -1,6 +1,7 @@
 from copy import deepcopy
 from enum import IntEnum
 from itertools import product
+import pickle
 from random import seed, shuffle
 
 debugging = True
@@ -300,3 +301,12 @@ class Trash:
     @property
     def most_recent(self):
         return self._most_recent
+
+
+def pkl_to_txt(pkl_file, txt_file):
+    """Convert the pickle data file into txt for analysis in R"""
+    all_data = pickle.load(open(pkl_file, "rb"))
+    with open(txt_file, "w") as fout:
+        fout.write('"index" "score"\n')
+        for entry in all_data:
+            fout.write("{} {}\n".format(entry["game"], entry["score"]))

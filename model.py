@@ -12,6 +12,9 @@ class ActrPlayer(Player):
         self.pnr = pnr
         self.ppnr = 1 - self.pnr
         self.debug = debug
+        if self.debug:
+            self.utilities = {}
+            self.utility_boundary = []
         self.model_path = model_path
 
         self.ATmap = [None, "C", "R", "P", "D"]
@@ -22,12 +25,28 @@ class ActrPlayer(Player):
     def reset(self):
         self.last_hinted = set()
         self.response = ""
+        if self.debug:
+            self.utility_boundary.append(
+                max([len(x) for x in self.utilities.values()] + [0])
+            )
 
     def reload(self):
         actr.reset()
         actr.load_act_r_model(self.model_path)
         actr.install_device(actr.open_exp_window("Hanabi", visible=False))
         actr.set_parameter_value(":v", self.debug)
+        if self.debug:
+            self.utilities = {}
+            self.utility_boundary = []
+
+    def _log_strategy_utility(self):
+        if self.debug:
+            for p in actr.all_productions():
+                if p.startswith("S-"):
+                    if p in self.utilities.keys():
+                        self.utilities[p].append(actr.spp(p, ":u")[0][0])
+                    else:
+                        self.utilities[p] = [actr.spp(p, ":u")[0][0]]
 
     def _card_info(self, name, x, y, color, rank, owner, index=None, count=None):
         return [
@@ -133,6 +152,7 @@ class ActrPlayer(Player):
     def get_action(self, game):
 
         # re-encode game state
+        self._log_strategy_utility()
         self._log_state(game)
         self._show_state(game)
 
@@ -179,6 +199,28 @@ class ActrPlayer(Player):
         if update:
             actr.run(10)
             self._log_state(game)
+
+    def plot_utilities(self, png_file):
+        from matplotlib.pyplot import figure
+        import matplotlib.pyplot as plt
+
+        figure(figsize=(10, 7), dpi=80)
+        for p, utils in self.utilities.items():
+            plt.plot(range(len(utils)), utils, label=p)
+        xmin, xmax, ymin, ymax = plt.axis()
+        plt.vlines(
+            x=self.utility_boundary,
+            ymin=ymin,
+            ymax=ymax,
+            ls="--",
+            label="game boundaries",
+            color="black",
+        )
+        plt.xlabel("numbers of action taken")
+        plt.ylabel("utility")
+        plt.legend(bbox_to_anchor=(0, -0.1), loc="upper left")
+        plt.tight_layout()
+        plt.savefig(png_file)
 
 
 if __name__ == "__main__":

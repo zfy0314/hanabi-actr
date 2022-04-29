@@ -59,6 +59,10 @@ def experiment(player1, player2, **kwargs):
             all_data.save_to_pkl(kwargs["save_pkl"])
         if kwargs.get("save_txt", None) is not None:
             all_data.save_to_txt(kwargs["save_txt"])
+        if "interact" in kwargs.keys():
+            import pdb
+
+            pdb.set_trace()
 
 
 if __name__ == "__main__":

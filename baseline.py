@@ -1,15 +1,18 @@
 from functools import cmp_to_key
+import importlib
 from random import choice, seed
+
 from player import ActionType as AT
 from player import Action, Player
 import utils
 
 
 class HardcodedPlayer(Player):
-    def __init__(self, name, pnr):
+    def __init__(self, name, pnr, debug=False):
         self.name = name
         self.pnr = pnr
         self.reset()
+        utils.debugging = debug
 
     def reset(self):
         self.last_hinted = None
@@ -155,73 +158,8 @@ class HardcodedPlayer(Player):
 
 
 if __name__ == "__main__":
-    from game import Game
-    import argparse
+    from experiment import experiment
 
-    parser = argparse.ArgumentParser(description="Baseline hardcoded agent for Hanabi")
-    parser.add_argument(
-        "--human", action="store_true", help="play the baseline with a cli interface"
+    experiment(
+        "baseline", "baseline", runs=500, games=1, plot_dist="baseline_distribution.png"
     )
-    parser.add_argument(
-        "--switch", action="store_true", help="change the order of the players"
-    )
-    parser.add_argument("--debug", action="store_true", help="enable debugging message")
-    parser.add_argument(
-        "--seed", default=0, help="seed for initializing the deck", type=int
-    )
-    parser.add_argument("--runs", default=1, help="number of games", type=int)
-    parser.add_argument("--dist", action="store_true", help="draw score distribution")
-    parser.add_argument(
-        "--png",
-        default="baseline_distribution.png",
-        help="file name for distribution plot",
-        type=str,
-    )
-    args = parser.parse_args()
-    utils.debugging = args.debug
-
-    if args.human:
-        from human import HumanPlayer
-
-        if args.switch:
-            players = [
-                HardcodedPlayer("Alice", 0),
-                HumanPlayer("Bob", 1, debug=args.debug),
-            ]
-        else:
-            players = [
-                HumanPlayer("Alice", 0, debug=args.debug),
-                HardcodedPlayer("Bob", 1),
-            ]
-    else:
-        players = [HardcodedPlayer("Alice", 0), HardcodedPlayer("Bob", 1)]
-
-    if args.runs == 1:
-        G = Game(players, seed=args.seed)
-        score = G.run()
-        print("score: ", score)
-    else:
-        seed(args.seed)
-        scores = []
-        G = Game(players)
-        for i in range(args.runs):
-            scores.append(G.run())
-            G.reset(None)
-        print(
-            "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
-                args.runs,
-                sum(scores) / args.runs,
-                min(scores),
-                max(scores),
-                max(set(scores), key=scores.count),
-            )
-        )
-
-        if args.dist:
-            from matplotlib import pyplot as plt
-
-            plt.hist(scores, range(27), density=True)
-            plt.xlabel("score")
-            plt.ylabel("density")
-            plt.title("distribution of baseline agent over {} games".format(args.runs))
-            plt.savefig(args.png)

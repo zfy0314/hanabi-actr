@@ -1,5 +1,6 @@
 from copy import deepcopy
 from enum import IntEnum
+import importlib
 from itertools import product
 import pickle
 from random import seed, shuffle
@@ -303,10 +304,133 @@ class Trash:
         return self._most_recent
 
 
-def pkl_to_txt(pkl_file, txt_file):
-    """Convert the pickle data file into txt for analysis in R"""
-    all_data = pickle.load(open(pkl_file, "rb"))
-    with open(txt_file, "w") as fout:
-        fout.write('"index" "score"\n')
-        for entry in all_data:
-            fout.write("{} {}\n".format(entry["game"], entry["score"]))
+class DataObject:
+    def __init__(self, title, data=[], trials=set(), games=set()):
+        self.title = title
+        self.data = data
+        self.trials = trials
+        self.games = games
+        self.plt = None
+
+    def _plt_clear(self):
+        if self.plt is None:
+            self.plt = importlib.import_module("matplotlib.pyplot")
+        else:
+            self.plt.clf()
+
+    def _get_scores(self, filter_func=lambda x: True, sort_func=lambda x: x["score"]):
+        return [
+            entry["score"]
+            for entry in sorted(self.data, key=sort_func)
+            if filter_func(entry)
+        ]
+
+    def _print_summary(self, scores, prefix=""):
+        num = len(scores)
+        print("=" * 32)
+        print(prefix, "{} games".format(num))
+        print("  average: {}".format(sum(scores) / num))
+        print("  min:     {}".format(min(scores)))
+        print("  25%:     {}".format(scores[num // 4]))
+        print("  75%:     {}".format(scores[num // 4]))
+        print("  max:     {}".format(max(scores)))
+        print("  mode:    {}".format(max(scores, key=scores.count)))
+        print("=" * 32)
+
+    def log_game(self, game, trial=None, index=None):
+        self.trials.add(trial)
+        self.games.add(index)
+        game_summary = game.summary
+        game_summary.update({"trial": trial, "game": index})
+        self.data.append(game_summary)
+
+    def save_to_txt(self, txt_file):
+        with open("txt_file", "w") as fout:
+            fout.write('"index" "score" "turns" "hints" "hits"\n')
+            for entry in self.data:
+                fout.write(
+                    "{} {} {} {} {}\n".format(
+                        entry["game"],
+                        entry["score"],
+                        entry["turns"],
+                        entry["hints"],
+                        entry["hits"],
+                    )
+                )
+
+    def save_to_pkl(self, pkl_file):
+        pickle.dump(
+            [self.title, self.data, self.trials, self.games], open(pkl_file, "wb")
+        )
+
+    @staticmethod
+    def load_from_pkl(pkl_file):
+        return DataObject(*pickle.load(open(pkl_file, "rb")))
+
+    def print_summary(self):
+        if self.games == {None}:
+            self._print_summary(self._get_scores())
+        else:
+            for index in self.games:
+                self._print_summary(
+                    self._get_scores(lambda x: x["game"] == index),
+                    "game {}:".format(index),
+                )
+
+    def plot_density(self, png_file, index=None):
+        self._plt_clear()
+        if index is None:
+            scores = self._get_scores()
+        else:
+            scores = self._get_scores(lambda x: x["game"] == index)
+        self.plt.hist(scores, range(27), density=True)
+        self.plt.xlabel("score")
+        self.plt.ylabel("density")
+        self.plt.title(
+            "distribution of {} over {} games".format(self.title, len(scores))
+        )
+        self.plt.savefig(png_file)
+
+    def plot_curve(self, png_file):
+        self._plt_clear()
+        indices = sorted(self.games)
+        games = len(self.games)
+        trials = len(self.trials)
+        scores = [self._get_scores(lambda x: x["game"] == i) for i in indices]
+        scores_mean = [sum(x) / trials for x in scores]
+        scores_lower = [x[trials // 4] for x in scores]
+        scores_upper = [x[3 * trials // 4] for x in scores]
+        self.plt.plot(indices, scores_mean)
+        self.plt.fill_between(indices, scores_lower, scores_upper, alpha=0.2)
+        self.plt.xlabel("games")
+        self.plt.ylabel("score")
+        self.plt.title(
+            "score of {} over {} games averaged over {} trials".format(
+                self.title, games, len(self.trials)
+            )
+        )
+        self.plt.savefig(png_file)
+
+    def plot_difference(self, png_file):
+        self._plt_clear()
+        first = self._get_scores(
+            lambda x: x["game"] == min(self.games), lambda x: x["trial"]
+        )
+        last = self._get_scores(
+            lambda x: x["game"] == max(self.games), lambda x: x["trial"]
+        )
+        diff = [b - a for a, b in zip(first, last)]
+        limit = int(max(max(diff), -min(diff))) + 1
+        self.plt.hist(diff, range(-limit, limit), density=True)
+        self.plt.xlabel("score difference")
+        self.plt.ylabel("density")
+        self.plt.title(
+            "difference in game {} and game {} for {} over {} games".format(
+                max(self.games), min(self.games), self.title, len(diff)
+            )
+        )
+        self.plt.savefig(png_file)
+
+    @staticmethod
+    def plot_from_pkl(pkl_file, plot_type, png_file):
+        getattr(DataObject.load_from_pkl(pkl_file), "plot_" + plot_type)(png_file)

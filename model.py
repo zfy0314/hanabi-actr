@@ -1,5 +1,3 @@
-import pickle
-
 import actr
 from player import ActionType as AT
 from player import Action, Player
@@ -184,160 +182,14 @@ class ActrPlayer(Player):
 
 
 if __name__ == "__main__":
-    from game import Game
-    import utils
-    import argparse
-    from random import seed
+    from experiment import experiment
 
-    parser = argparse.ArgumentParser(description="ACT-R agent for Hanabi")
-    parser.add_argument(
-        "--human", action="store_true", help="play the ACT-R with a cli interface"
+    experiment(
+        "baseline",
+        "ACTR",
+        runs=200,
+        games=10,
+        plot_curve="curve_variants.png",
+        plot_diff="diff_variants.png",
+        save_pkl="data_variants.pkl",
     )
-    parser.add_argument(
-        "--switch", action="store_true", help="change the order of the players"
-    )
-    parser.add_argument("--debug", action="store_true", help="enable debugging message")
-    parser.add_argument(
-        "--seed", default=0, help="seed for initializing the deck", type=int
-    )
-    parser.add_argument("--runs", default=1, help="number of trials", type=int)
-    parser.add_argument(
-        "--games", default=1, help="number of games in each trial", type=int
-    )
-    parser.add_argument(
-        "--save_data",
-        action="store_true",
-        help="save the game states into a pickle file",
-    )
-    parser.add_argument(
-        "--pkl_data",
-        default="actr_data.pkl",
-        help="file name for game data",
-        type=str,
-    )
-    parser.add_argument("--plot", action="store_true", help="plot scores")
-    parser.add_argument(
-        "--png_plot",
-        default="performance_curve.png",
-        help="file name for score plot",
-        type=str,
-    )
-    parser.add_argument("--dist", action="store_true", help="draw score distribution")
-    parser.add_argument(
-        "--png_dist",
-        default="actr_distribution.png",
-        help="file name for distribution plot",
-        type=str,
-    )
-    args = parser.parse_args()
-    utils.debugging = args.debug
-
-    if args.human:
-        from human import HumanPlayer
-
-        if args.switch:
-            players = [
-                ActrPlayer("Alice", 0, debug=args.debug),
-                HumanPlayer("Bob", 1, debug=args.debug),
-            ]
-        else:
-            players = [
-                HumanPlayer("Alice", 0, debug=args.debug),
-                ActrPlayer("Bob", 1, debug=args.debug),
-            ]
-    else:
-        from baseline import HardcodedPlayer
-
-        if args.switch:
-            players = [
-                ActrPlayer("Alice", 0, debug=args.debug),
-                HardcodedPlayer("Bob", 1),
-            ]
-        else:
-            players = [
-                HardcodedPlayer("Alice", 0),
-                ActrPlayer("Bob", 1, debug=args.debug),
-            ]
-
-    if args.runs == 1 and args.games == 1:
-        G = Game(players, seed=args.seed)
-        score = G.run()
-        print(
-            "score: ",
-            score,
-            " hints: ",
-            G.hints,
-            " hits: ",
-            G.hits,
-            " turns: ",
-            G.turns,
-        )
-    else:
-        seed(args.seed)
-        G = Game(players)
-        all_data = []
-        try:
-            from tqdm import tqdm
-
-            wrapper = tqdm
-        except ModuleNotFoundError:
-            wrapper = lambda x: x  # noqa
-        scores = [[] for _ in range(args.games)]
-        for j in range(args.runs):
-            G.reload()
-            for i in wrapper(list(range(args.games))):
-                scores[i].append(G.run())
-                all_data.append(
-                    {
-                        "trial": j,
-                        "game": i,
-                        "score": G.score,
-                        "turns": G.turns,
-                        "hints": G.hints,
-                        "hits": G.hits,
-                    }
-                )
-                G.reset(None)
-        scores = [sorted(s) for s in scores]
-        scores_mean = [sum(s) / args.runs for s in scores]
-        scores_lower = [s[args.runs // 4] for s in scores]
-        scores_upper = [s[3 * args.runs // 4] for s in scores]
-        print(
-            "{} games:\n  avg: {}, min: {}, max: {}, mode: {}".format(
-                args.games,
-                sum(scores_mean) / args.games,
-                min(scores_mean),
-                max(scores_mean),
-                max(set(scores_mean), key=scores.count),
-            )
-        )
-
-        if args.plot:
-            from matplotlib import pyplot as plt
-
-            plt.plot(range(1, 1 + args.games), scores_mean)
-            plt.fill_between(
-                range(1, 1 + args.games), scores_lower, scores_upper, alpha=0.2
-            )
-            plt.xlabel("games")
-            plt.ylabel("score")
-            plt.title(
-                "score of ACT-R agent over {} games averaged over {} trials".format(
-                    args.games, args.runs
-                )
-            )
-            plt.savefig(args.png_plot)
-
-        if args.dist:
-            from matplotlib import pyplot as plt
-
-            plt.hist(scores_mean, range(27), density=True)
-            plt.xlabel("score")
-            plt.ylabel("density")
-            plt.title(
-                "distribution of actr vs. baseline over {} games".format(args.runs)
-            )
-            plt.savefig(args.png_dist)
-
-        if args.save_data:
-            pickle.dump(all_data, open(args.pkl_data, "wb"))

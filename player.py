@@ -32,7 +32,7 @@ class Action:
 
 
 class Player:
-    def __init__(self, name, pnr):
+    def __init__(self, name, pnr, debug=False):
         self.name = name
         self.pnr = pnr
 

@@ -81,3 +81,12 @@ class Game:
     @property
     def score(self):
         return self.board.score
+
+    @property
+    def summary(self):
+        return {
+            "score": self.score,
+            "hits": self.hits,
+            "hints": self.hints,
+            "turns": self.turns,
+        }

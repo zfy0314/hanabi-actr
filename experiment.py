@@ -2,9 +2,11 @@ import argparse
 import importlib
 from random import seed
 
+import actr
 from baseline import HardcodedPlayer
 from game import Game
 from human import HumanPlayer
+from player import Player
 from model import ActrPlayer
 from utils import DataObject
 
@@ -18,13 +20,18 @@ agent_map = {
 
 def experiment(player1, player2, **kwargs):
 
+    if not isinstance(player1, Player):
+        player1 = agent_map.get(player1, HardcodedPlayer)(
+            "Alice", 0, kwargs.get("debug", False)
+        )
+    if not isinstance(player2, Player):
+        player2 = agent_map.get(player2, HardcodedPlayer)(
+            "Bob", 1, kwargs.get("debug", False)
+        )
     assert (
-        player1 != "ACTR" or player2 != "ACTR"
+        type(player1).__name__ != "ActrPlayer" or type(player2).__name__ != "ActrPlayer"
     ), "two ACT-R agents game is not currently supported"
-    players = [
-        agent_map.get(player1, HardcodedPlayer)("Alice", 0, kwargs.get("debug", False)),
-        agent_map.get(player2, HardcodedPlayer)("Bob", 1, kwargs.get("debug", False)),
-    ]
+    players = [player1, player2]
 
     if kwargs.get("runs", 1) == 1 and kwargs.get("games", 1) == 1:
         G = Game(players, seed=kwargs.get("seed", 0))
@@ -34,14 +41,23 @@ def experiment(player1, player2, **kwargs):
         seed(kwargs.get("seed", 0))
         G = Game(players)
         all_data = DataObject(
-            kwargs.get("title", " [{}] vs. [{}] ".format(player1, player2))
+            title=kwargs.get(
+                "title",
+                " [{}] vs. [{}] ".format(
+                    type(player1).__name__, type(player2).__name__
+                ),
+            ),
+            data=[],
+            trials=set(),
+            games=set(),
         )
         try:
-            wrapper = importlib.import_module("tqdm").tqdm
+            tqdm = importlib.import_module("tqdm")
+            wrapper = lambda x: tqdm.tqdm(x, leave=False) if len(x) > 1 else x  # noqa
         except ModuleNotFoundError:
             wrapper = lambda x: x  # noqa
 
-        for j in range(kwargs.get("runs", 1)):
+        for j in wrapper(range(kwargs.get("runs", 1))):
             G.reload()
             for i in wrapper(list(range(kwargs.get("games", 1)))):
                 G.run()
@@ -59,10 +75,56 @@ def experiment(player1, player2, **kwargs):
             all_data.save_to_pkl(kwargs["save_pkl"])
         if kwargs.get("save_txt", None) is not None:
             all_data.save_to_txt(kwargs["save_txt"])
-        if "interact" in kwargs.keys():
-            import pdb
 
-            pdb.set_trace()
+    return players
+
+
+def report():
+
+    # Distribution of baseline
+    experiment("baseline", "baseline", runs=500, games=1, plot_dist="Fig2.png")
+
+    # Preference learning
+    player2 = ActrPlayer("Bob", 1, model_path="ACT-R:hanabi-actr;model_preference.lisp")
+    experiment(
+        "baseline",
+        player2,
+        runs=200,
+        games=10,
+        plot_curve="Fig4a.png",
+        plot_diff="Fig4b.png",
+    )
+    experiment("baseline", player2, runs=200, plot_dist="Fig5b.png")
+    player2 = ActrPlayer(
+        "Bob",
+        1,
+        model_path="ACT-R:hanabi-actr;model_preference.lisp",
+        utility_learning=False,
+    )
+    experiment("baseline", player2, runs=200, plot_dist="Fig5a.png")
+    player2 = ActrPlayer(
+        "Bob", 1, model_path="ACT-R:hanabi-actr;model_preference.lisp", log_utility=True
+    )
+    players = experiment("baseline", player2, games=200)
+    players[1].plot_utilities("Fig6.png")
+
+    # Variant learning
+    player2 = ActrPlayer("Bob", 1)
+    experiment(
+        "baseline",
+        player2,
+        runs=200,
+        games=10,
+        plot_curve="Fig7a.png",
+        plot_diff="Fig8b.png",
+    )
+    experiment("baseline", player2, runs=200, plot_dist="Fig8b.png")
+    player2 = ActrPlayer(
+        "Bob",
+        1,
+        utility_learning=False,
+    )
+    experiment("baseline", player2, runs=200, plot_dist="Fig8a.png")
 
 
 if __name__ == "__main__":
@@ -98,5 +160,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--save_txt", help="file name for saving data in txt format", type=str
     )
+    parser.add_argument(
+        "--report",
+        help="generate the figures in the report, if set, ignore all other arguments",
+        action="store_true",
+    )
     args = parser.parse_args()
-    experiment(**args.__dict__)
+    if args.report:
+        report()
+    else:
+        experiment(**args.__dict__)

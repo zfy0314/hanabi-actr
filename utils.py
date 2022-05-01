@@ -315,8 +315,9 @@ class DataObject:
     def _plt_clear(self):
         if self.plt is None:
             self.plt = importlib.import_module("matplotlib.pyplot")
+            self.plt.close()
         else:
-            self.plt.clf()
+            self.plt.close()
 
     def _get_scores(self, filter_func=lambda x: True, sort_func=lambda x: x["score"]):
         return [
@@ -368,14 +369,11 @@ class DataObject:
         return DataObject(*pickle.load(open(pkl_file, "rb")))
 
     def print_summary(self):
-        if self.games == {None}:
-            self._print_summary(self._get_scores())
-        else:
-            for index in self.games:
-                self._print_summary(
-                    self._get_scores(lambda x: x["game"] == index),
-                    "game {}:".format(index),
-                )
+        for index in self.games:
+            self._print_summary(
+                self._get_scores(lambda x: x["game"] == index),
+                "game {}:".format(index),
+            )
 
     def plot_density(self, png_file, index=None):
         self._plt_clear()

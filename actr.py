@@ -494,8 +494,6 @@ class interface:
             )
             self.send("remove", "python-echo" + str(self.echo_count))
             self.echo = False
-        else:
-            print("no_output called when output was already off.")
 
 
 current_connection = connection()

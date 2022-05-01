@@ -6,16 +6,26 @@ from utils import Color, Rank
 
 class ActrPlayer(Player):
     def __init__(
-        self, name, pnr, debug=False, model_path="ACT-R:hanabi-actr;model.lisp"
+        self,
+        name,
+        pnr,
+        debug=False,
+        model_path="ACT-R:hanabi-actr;model.lisp",
+        log_utility=False,
+        utility_learning=True,
     ):
         self.name = name
         self.pnr = pnr
         self.ppnr = 1 - self.pnr
         self.debug = debug
-        if self.debug:
+        if not self.debug:
+            actr.stop_output()
+        self.log_utility = log_utility
+        if log_utility:
             self.utilities = {}
             self.utility_boundary = []
         self.model_path = model_path
+        self.utility_learning = utility_learning
 
         self.ATmap = [None, "C", "R", "P", "D"]
         self.ranks = ["zero", "one", "two", "three", "four", "five"]
@@ -25,7 +35,7 @@ class ActrPlayer(Player):
     def reset(self):
         self.last_hinted = set()
         self.response = ""
-        if self.debug:
+        if self.log_utility:
             self.utility_boundary.append(
                 max([len(x) for x in self.utilities.values()] + [0])
             )
@@ -35,12 +45,15 @@ class ActrPlayer(Player):
         actr.load_act_r_model(self.model_path)
         actr.install_device(actr.open_exp_window("Hanabi", visible=False))
         actr.set_parameter_value(":v", self.debug)
-        if self.debug:
+        actr.set_parameter_value(":cmdt", self.debug)
+        actr.set_parameter_value(":model-warnings", self.debug)
+        actr.set_parameter_value(":ul", self.utility_learning)
+        if self.log_utility:
             self.utilities = {}
             self.utility_boundary = []
 
     def _log_strategy_utility(self):
-        if self.debug:
+        if self.log_utility:
             for p in actr.all_productions():
                 if p.startswith("S-"):
                     if p in self.utilities.keys():
@@ -201,10 +214,9 @@ class ActrPlayer(Player):
             self._log_state(game)
 
     def plot_utilities(self, png_file):
-        from matplotlib.pyplot import figure
         import matplotlib.pyplot as plt
 
-        figure(figsize=(10, 7), dpi=80)
+        plt.figure(figsize=(10, 7), dpi=80)
         for p, utils in self.utilities.items():
             plt.plot(range(len(utils)), utils, label=p)
         xmin, xmax, ymin, ymax = plt.axis()
@@ -221,6 +233,7 @@ class ActrPlayer(Player):
         plt.legend(bbox_to_anchor=(0, -0.1), loc="upper left")
         plt.tight_layout()
         plt.savefig(png_file)
+        plt.close()
 
 
 if __name__ == "__main__":
